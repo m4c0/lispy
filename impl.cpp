@@ -147,9 +147,6 @@ static auto ls(const lispy::node * n) {
   
   if (ctx.fns.has(fn)) {
     return ctx.fns[fn](ctx, n, aa, ap - aa);
-  } else if (fn == "random") {
-    if (ls(n) == 0) err(n, "rand requires at least a parameter");
-    return eval(ctx, aa[rng::rand(ls(n) - 1)]);
   } else if (ctx.defs.has(fn)) {
     return eval(ctx, ctx.defs[fn]);
   } else {
