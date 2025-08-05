@@ -46,6 +46,7 @@ public:
 };
 
 void lispy::err(const lispy::node * n, jute::view msg) { n->r->err(msg, n->loc); }
+void lispy::err(const lispy::node * n, jute::view msg, unsigned rloc) { n->r->err(msg, n->loc + rloc); }
 
 static bool is_atom_char(char c) {
   return c > ' ' && c <= '~' && c != ';' && c != '(' && c != ')';

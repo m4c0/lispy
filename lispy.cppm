@@ -29,6 +29,7 @@ namespace lispy {
   };
 
   export [[noreturn]] void err(const lispy::node * n, jute::view msg);
+  export [[noreturn]] void err(const lispy::node * n, jute::view msg, unsigned rloc);
 
   export constexpr bool is_atom(const node * n) { return n->atom.size(); }
 
