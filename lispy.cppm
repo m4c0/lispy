@@ -218,7 +218,7 @@ namespace lispy {
 namespace lispy {
   export hai::fn<void *> alloc_node {};
 
-  export void run(jute::view filename, context & ctx, auto && callback) {
+  export void run(jute::view filename, context & ctx, hai::fn<void, const node *> callback) {
     auto code = jojo::read_cstr(filename);
     reader r { code };
     while (r) callback(eval(ctx, next_node(r)));
