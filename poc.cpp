@@ -12,15 +12,8 @@ struct custom_node : node {
 };
 
 int main() try {
-  hai::array<custom_node> buf { 10240 };
-  auto cur = buf.begin();
-
-  context ctx {};
-  ctx.allocator = [&] -> lispy::node * {
-    if (cur == buf.end()) throw 0;
-    return cur++;
-  };
-  ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
+  ctx_w_mem<custom_node> cm {};
+  cm.ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
 
     auto a = static_cast<const custom_node *>(eval(ctx, aa[0]));
@@ -35,7 +28,7 @@ int main() try {
     return nn;
   };
 
-  run("poc.lsp", ctx, [&](auto * node) {
+  run("poc.lsp", cm.ctx, [&](auto * node) {
     auto nn = static_cast<const custom_node *>(node);
     if (nn->is_val) putln("result: ", nn->val);
   });
