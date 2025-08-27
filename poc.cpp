@@ -1,4 +1,4 @@
-#pragma leco test
+#pragma leco tool
 
 import hai;
 import lispy;
@@ -14,12 +14,12 @@ struct custom_node : node {
 int main() try {
   hai::array<custom_node> buf { 10240 };
   auto cur = buf.begin();
-  alloc_node = [&] -> void * {
+
+  context ctx {};
+  ctx.allocator = [&] -> lispy::node * {
     if (cur == buf.end()) throw 0;
     return cur++;
   };
-
-  context ctx {};
   ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
 
@@ -29,7 +29,7 @@ int main() try {
     auto ai = a->is_val ? a->val : to_i(a);
     auto bi = b->is_val ? b->val : to_i(b);
 
-    auto * nn = new custom_node { *n };
+    auto * nn = new (ctx.allocator()) custom_node { *n };
     nn->val = ai + bi;
     nn->is_val = true;
     return nn;
@@ -39,8 +39,6 @@ int main() try {
     auto nn = static_cast<const custom_node *>(node);
     if (nn->is_val) putln("result: ", nn->val);
   });
-
-  alloc_node = [] -> void * { return nullptr; };
 } catch (const parser_error & e) {
   errfn("poc.lsp:%d:%d: %s", e.line, e.col, e.msg.begin());
   return 1;

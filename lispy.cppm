@@ -25,7 +25,7 @@ namespace lispy {
     const reader * r {};
     unsigned loc {};
 
-    void * operator new(traits::size_t n);
+    void * operator new(traits::size_t n, void * p) { return p; }
   };
 
   export [[noreturn]] void err(const lispy::node * n, jute::view msg);
@@ -53,19 +53,16 @@ namespace lispy {
   export struct context;
   using fn_t = const node * (*)(context & ctx, const node * n, const node * const * aa, unsigned as);
   struct context {
+    hai::fn<node *> allocator {};
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
   };
 
   export [[nodiscard]] const node * eval(context & ctx, const node * n);
 
-  export hai::fn<void *> alloc_node {};
-
   export void run(jute::view filename, context & ctx, hai::fn<void, const node *> callback);
   export void check(jute::view filename, context & ctx) {
     run(filename, ctx, [](auto) {});
   }
-
-  void * node::operator new(traits::size_t sz) { return lispy::alloc_node(); }
 }
 

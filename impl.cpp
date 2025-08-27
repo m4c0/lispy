@@ -79,8 +79,8 @@ static jute::view next_token(lispy::reader & r) {
   return {};
 }
 
-static lispy::node * next_list(lispy::reader & r) {
-  auto * res = new lispy::node {
+static lispy::node * next_list(lispy::context & ctx, lispy::reader & r) {
+  auto * res = new (ctx.allocator()) lispy::node {
     .r = &r,
     .loc = r.loc(),
   };
@@ -91,8 +91,8 @@ static lispy::node * next_list(lispy::reader & r) {
     if (token == "") break;
 
     auto nn = (token == "(") ?
-      next_list(r) :
-      new lispy::node {
+      next_list(ctx, r) :
+      new (ctx.allocator()) lispy::node {
         .atom = token,
         .r = &r,
         .loc = static_cast<unsigned>(r.loc() - token.size()),
@@ -102,16 +102,16 @@ static lispy::node * next_list(lispy::reader & r) {
   }
   err(res, "unbalanced open parenthesis");
 }
-static lispy::node * next_node(lispy::reader & r) {
+static lispy::node * next_node(lispy::context & ctx, lispy::reader & r) {
   if (!r) return {};
 
   auto token = next_token(r);
   if (token == "(") {
-    return next_list(r);
+    return next_list(ctx, r);
   } else if (token == ")") {
     r.err("unbalanced close parenthesis");
   } else {
-    return new lispy::node { 
+    return new (ctx.allocator()) lispy::node { 
       .atom = token,
       .r = &r,
       .loc = static_cast<unsigned>(r.loc() - token.size()),
@@ -157,6 +157,6 @@ static auto ls(const lispy::node * n) {
 void lispy::run(jute::view filename, lispy::context & ctx, hai::fn<void, const lispy::node *> callback) {
   auto code = jojo::read_cstr(filename);
   reader r { code };
-  while (r) callback(eval(ctx, next_node(r)));
+  while (r) callback(eval(ctx, next_node(ctx, r)));
 }
 
