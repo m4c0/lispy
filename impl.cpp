@@ -34,7 +34,7 @@ public:
         l++;
       }
     }
-    throw lispy::parser_error { msg, l, loc - last };
+    fail({ msg, l, loc - last });
   }
   [[noreturn]] void err(jute::view msg) const {
     err(msg, m_pos);

@@ -1,4 +1,8 @@
-#pragma leco tool
+#ifdef LECO_TARGET_WASM
+#pragma leco app
+#else
+#pragma leco test
+#endif
 
 import jute;
 import lispy;
@@ -16,7 +20,7 @@ struct custom_node : node {
   bool is_val;
 };
 
-int main() try {
+void run() {
   ctx_w_mem<custom_node> cm {};
   cm.ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
@@ -37,6 +41,13 @@ int main() try {
     auto nn = static_cast<const custom_node *>(node);
     if (nn->is_val) putln("result: ", nn->val);
   });
+}
+
+#ifdef LECO_TARGET_WASM
+int main() { run(); }
+#else
+int main() try {
+  run();
 } catch (const parser_error & e) {
   errfn("poc.lsp:%d:%d: %s", e.line, e.col, e.msg.begin());
   return 1;
@@ -44,4 +55,4 @@ int main() try {
   errln("poc.lsp: unknown error");
   return 1;
 }
-
+#endif

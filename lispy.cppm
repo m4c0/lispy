@@ -5,6 +5,10 @@ import hashley;
 import jute;
 import no;
 
+#ifdef LECO_TARGET_WASM
+import vaselin;
+#endif
+
 namespace lispy {
   export struct parser_error {
     jute::heap msg;
@@ -42,6 +46,17 @@ namespace lispy {
     return v;
   }
 
+#ifdef LECO_TARGET_WASM
+  [[noreturn]] void fail(parser_error err) {
+    vaselin::console_error(err.msg.begin(), err.msg.size());
+    vaselin::raise_error();
+  }
+#else
+  [[noreturn]] void fail(parser_error err) {
+    throw err;
+  }
+#endif
+
   export struct context;
   using fn_t = const node * (*)(context & ctx, const node * n, const node * const * aa, unsigned as);
   struct context {
@@ -55,7 +70,7 @@ namespace lispy {
     T * current = memory.begin();
     context ctx {
       .allocator = [this] -> node * {
-        if (current == memory.end()) throw 0;
+        if (current == memory.end()) fail({});
         return current++;
       },
     };
