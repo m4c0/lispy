@@ -4,9 +4,6 @@ import hai;
 import hashley;
 import jute;
 import no;
-import rng;
-import silog;
-import sires;
 
 namespace lispy {
   export struct parser_error {
