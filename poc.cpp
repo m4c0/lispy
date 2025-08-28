@@ -1,11 +1,15 @@
 #pragma leco tool
 
-import hai;
-import jojo;
+import jute;
 import lispy;
 import print;
 
 using namespace lispy;
+
+static constexpr jute::view src = R"(
+  (add 3 5)
+  (add (add 1 1) (add 2 1))
+)";
 
 struct custom_node : node {
   int val;
@@ -29,7 +33,6 @@ int main() try {
     return nn;
   };
 
-  auto src = jojo::read_cstr("poc.lsp");
   run(src, cm.ctx, [&](auto * node) {
     auto nn = static_cast<const custom_node *>(node);
     if (nn->is_val) putln("result: ", nn->val);
