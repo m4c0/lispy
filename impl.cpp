@@ -154,9 +154,8 @@ static auto ls(const lispy::node * n) {
   }
 }
 
-void lispy::run(jute::view filename, lispy::context & ctx, hai::fn<void, const lispy::node *> callback) {
-  auto code = jojo::read_cstr(filename);
-  reader r { code };
+void lispy::run(jute::view source, lispy::context & ctx, hai::fn<void, const lispy::node *> callback) {
+  reader r { source };
   while (r) callback(eval(ctx, next_node(ctx, r)));
 }
 

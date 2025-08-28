@@ -2,7 +2,6 @@
 export module lispy;
 import hai;
 import hashley;
-import jojo;
 import jute;
 import no;
 import rng;
@@ -71,9 +70,9 @@ namespace lispy {
 
   export [[nodiscard]] const node * eval(context & ctx, const node * n);
 
-  export void run(jute::view filename, context & ctx, hai::fn<void, const node *> callback);
-  export void check(jute::view filename, context & ctx) {
-    run(filename, ctx, [](auto) {});
+  export void run(jute::view source, context & ctx, hai::fn<void, const node *> callback);
+  export void check(jute::view source, context & ctx) {
+    run(source, ctx, [](auto) {});
   }
 }
 

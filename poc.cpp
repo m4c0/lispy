@@ -1,6 +1,7 @@
 #pragma leco tool
 
 import hai;
+import jojo;
 import lispy;
 import print;
 
@@ -28,7 +29,8 @@ int main() try {
     return nn;
   };
 
-  run("poc.lsp", cm.ctx, [&](auto * node) {
+  auto src = jojo::read_cstr("poc.lsp");
+  run(src, cm.ctx, [&](auto * node) {
     auto nn = static_cast<const custom_node *>(node);
     if (nn->is_val) putln("result: ", nn->val);
   });
