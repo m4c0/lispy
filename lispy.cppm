@@ -31,19 +31,15 @@ namespace lispy {
 
   export float to_f(const node * n) {
     if (!is_atom(n)) err(n, "expecting number");
-    try {
-      return jute::to_f(n->atom);
-    } catch (...) {
-      err(n, "invalid number");
-    }
+    auto [v, ok] = jute::to_f(n->atom);
+    if (!ok) err(n, "invalid number");
+    return v;
   }
   export int to_i(const node * n) {
     if (!is_atom(n)) err(n, "expecting number");
-    try {
-      return jute::to_u32(n->atom);
-    } catch (...) {
-      err(n, "invalid number");
-    }
+    auto [v, ok] = jute::to_u32(n->atom);
+    if (!ok) err(n, "invalid number");
+    return v;
   }
 
   export struct context;
