@@ -47,12 +47,12 @@ namespace lispy {
   }
 
 #ifdef LECO_TARGET_WASM
-  [[noreturn]] void fail(parser_error err) {
+  export [[noreturn]] void fail(parser_error err) {
     vaselin::console_error(err.msg.begin(), err.msg.size());
     vaselin::raise_error();
   }
 #else
-  [[noreturn]] void fail(parser_error err) {
+  export [[noreturn]] void fail(parser_error err) {
     throw err;
   }
 #endif
