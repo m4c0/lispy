@@ -12,13 +12,31 @@ using namespace lispy;
 
 static constexpr jute::view src = R"(
   (add 3 5)
-  (add (add 1 1) (add 2 1))
+  (add (add 1 1) (sub 2 1))
 )";
 
 struct custom_node : node {
   int val;
   bool is_val;
 };
+
+struct ctx : context {
+  custom_node * sub(auto n, auto a, auto b) {
+    auto * nn = new (allocator()) custom_node { *n };
+    nn->val = a->val + b->val;
+    nn->is_val = true;
+    return nn;
+  }
+};
+
+const node * fn(context & ctx, const node * n, const node * const * aa, unsigned as) {
+  if (as != 2) lispy::err(n, "sub expects two coordinates");
+
+  return static_cast<struct ctx &>(ctx).sub(static_cast<const custom_node *>(n),
+    static_cast<const custom_node *>(eval(ctx, aa[0])),
+    static_cast<const custom_node *>(eval(ctx, aa[1]))
+  );
+} 
 
 void run() {
   ctx_w_mem<custom_node> cm {};
@@ -36,6 +54,7 @@ void run() {
     nn->is_val = true;
     return nn;
   };
+  cm.ctx.fns["sub"] = fn;
 
   run(src, cm.ctx, [&](auto * node) {
     auto nn = static_cast<const custom_node *>(node);
@@ -49,10 +68,10 @@ int main() { run(); }
 int main() try {
   run();
 } catch (const parser_error & e) {
-  errfn("poc.lsp:%d:%d: %s", e.line, e.col, e.msg.begin());
+  errfn("line %d col %d: %s", e.line, e.col, e.msg.begin());
   return 1;
 } catch (...) {
-  errln("poc.lsp: unknown error");
+  errln("unknown error");
   return 1;
 }
 #endif
