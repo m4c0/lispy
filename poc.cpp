@@ -33,8 +33,8 @@ const node * fn(context & ctx, const node * n, const node * const * aa, unsigned
   if (as != 2) lispy::err(n, "sub expects two coordinates");
 
   return static_cast<struct ctx &>(ctx).sub(static_cast<const custom_node *>(n),
-    static_cast<const custom_node *>(eval(ctx, aa[0])),
-    static_cast<const custom_node *>(eval(ctx, aa[1]))
+    eval<custom_node>(ctx, aa[0]),
+    eval<custom_node>(ctx, aa[1])
   );
 } 
 
@@ -43,8 +43,8 @@ void run() {
   cm.ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
 
-    auto a = static_cast<const custom_node *>(eval(ctx, aa[0]));
-    auto b = static_cast<const custom_node *>(eval(ctx, aa[1]));
+    auto a = eval<custom_node>(ctx, aa[0]);
+    auto b = eval<custom_node>(ctx, aa[1]);
 
     auto ai = a->is_val ? a->val : to_i(a);
     auto bi = b->is_val ? b->val : to_i(b);

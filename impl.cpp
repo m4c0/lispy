@@ -125,7 +125,7 @@ static auto ls(const lispy::node * n) {
   return sz;
 }
 
-[[nodiscard]] const lispy::node * lispy::eval(lispy::context & ctx, const lispy::node * n) {
+template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context & ctx, const lispy::node * n) {
   if (!n->list) return n;
   if (!is_atom(n->list)) err(n->list, "expecting an atom");
 
@@ -148,7 +148,7 @@ static auto ls(const lispy::node * n) {
   if (ctx.fns.has(fn)) {
     return ctx.fns[fn](ctx, n, aa, ap - aa);
   } else if (ctx.defs.has(fn)) {
-    return eval(ctx, ctx.defs[fn]);
+    return eval<node>(ctx, ctx.defs[fn]);
   } else {
     err(n, *("invalid function name: "_hs + fn));
   }
@@ -156,6 +156,6 @@ static auto ls(const lispy::node * n) {
 
 void lispy::run(jute::view source, lispy::context & ctx, hai::fn<void, const lispy::node *> callback) {
   reader r { source };
-  while (r) callback(eval(ctx, next_node(ctx, r)));
+  while (r) callback(eval<node>(ctx, next_node(ctx, r)));
 }
 

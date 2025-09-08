@@ -89,7 +89,10 @@ namespace lispy {
     }
   };
 
-  export [[nodiscard]] const node * eval(context & ctx, const node * n);
+  export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context & ctx, const node * n) {
+    return static_cast<const N *>(eval<node>(ctx, n));
+  }
+  export template<> [[nodiscard]] const node * eval<node>(context & ctx, const node * n);
 
   export void run(jute::view source, context & ctx, hai::fn<void, const node *> callback);
   export void check(jute::view source, context & ctx) {
