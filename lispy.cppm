@@ -65,16 +65,23 @@ namespace lispy {
     hashley::fin<fn_t> fns { 127 };
   };
 
-  export template<typename T, typename C = context> struct ctx_w_mem {
+  export template<typename T> class memory {
     hai::array<T> memory { 10240 };
     T * current = memory.begin();
+
+  public:
+    node * alloc() {
+      if (current == memory.end()) fail({});
+      return current++;
+    }
+  };
+
+  export template<typename T, typename C = context> struct ctx_w_mem {
+    memory<T> mem {};
     C ctx {};
 
     ctx_w_mem() {
-      ctx.allocator = [this] -> node * {
-        if (current == memory.end()) fail({});
-        return current++;
-      };
+      ctx.allocator = [this] { return mem.alloc(); };
     }
   };
 
