@@ -89,6 +89,10 @@ namespace lispy {
     }
   };
 
+  export template<traits::base_is<node> N> N * clone(context * ctx, const node * n) {
+    return new (ctx->allocator()) N { *n };
+  }
+
   export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context & ctx, const node * n) {
     return static_cast<const N *>(eval<node>(ctx, n));
   }

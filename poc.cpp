@@ -22,7 +22,7 @@ struct custom_node : node {
 
 struct ctx : context {
   custom_node * sub(auto n, auto a, auto b) {
-    auto * nn = new (allocator()) custom_node { *n };
+    auto * nn = clone<custom_node>(this, n);
     nn->val = a->val + b->val;
     nn->is_val = true;
     return nn;
@@ -49,7 +49,7 @@ void run() {
     auto ai = a->is_val ? a->val : to_i(a);
     auto bi = b->is_val ? b->val : to_i(b);
 
-    auto * nn = new (ctx.allocator()) custom_node { *n };
+    auto * nn = clone<custom_node>(&ctx, n);
     nn->val = ai + bi;
     nn->is_val = true;
     return nn;
