@@ -66,8 +66,7 @@ namespace lispy {
   };
 
   export
-  template<typename T = node>
-  requires traits::is_assignable_from<node, T>
+  template<traits::base_is<node> T = node>
   class memory {
     hai::array<T> memory { 10240 };
     T * current = memory.begin();
@@ -79,7 +78,9 @@ namespace lispy {
     }
   };
 
-  export template<typename T, typename C = context> struct ctx_w_mem {
+  export
+  template<typename T, traits::base_is<context> C = context>
+  struct ctx_w_mem {
     memory<T> mem {};
     C ctx {};
 
