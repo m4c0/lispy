@@ -65,7 +65,10 @@ namespace lispy {
     hashley::fin<fn_t> fns { 127 };
   };
 
-  export template<typename T> class memory {
+  export
+  template<typename T = node>
+  requires traits::is_assignable_from<node, T>
+  class memory {
     hai::array<T> memory { 10240 };
     T * current = memory.begin();
 
