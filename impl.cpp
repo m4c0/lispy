@@ -154,8 +154,8 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   }
 }
 
-void lispy::run(jute::view source, lispy::context & ctx, hai::fn<void, const lispy::node *> callback) {
+void lispy::run(jute::view source, lispy::context & ctx) {
   reader r { source };
-  while (r) callback(eval<node>(ctx, next_node(ctx, r)));
+  while (r) auto _ = eval<node>(ctx, next_node(ctx, r));
 }
 

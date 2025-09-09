@@ -98,9 +98,6 @@ namespace lispy {
   }
   export template<> [[nodiscard]] const node * eval<node>(context & ctx, const node * n);
 
-  export void run(jute::view source, context & ctx, hai::fn<void, const node *> callback);
-  export void check(jute::view source, context & ctx) {
-    run(source, ctx, [](auto) {});
-  }
+  export void run(jute::view source, context & ctx);
 }
 
