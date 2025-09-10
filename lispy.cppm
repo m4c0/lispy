@@ -77,7 +77,7 @@ namespace lispy {
       return current++;
     }
   };
-  export template<typename T> constexpr auto allocator() {
+  export template<typename T=node> constexpr auto allocator() {
     return [mem=memory<T>()] mutable -> node * {
       return mem.alloc();
     };
