@@ -77,17 +77,11 @@ namespace lispy {
       return current++;
     }
   };
-
-  export
-  template<typename T, traits::base_is<context> C = context>
-  struct ctx_w_mem {
-    memory<T> mem {};
-    C ctx {};
-
-    ctx_w_mem() {
-      ctx.allocator = [this] { return mem.alloc(); };
-    }
-  };
+  export template<typename T> constexpr auto allocator() {
+    return [mem=memory<T>()] mutable -> node * {
+      return mem.alloc();
+    };
+  }
 
   export template<traits::base_is<node> N> N * clone(context * ctx, const node * n) {
     return new (ctx->allocator()) N { *n };

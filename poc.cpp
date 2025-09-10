@@ -22,8 +22,10 @@ struct custom_node : node {
 };
 
 void run() {
-  ctx_w_mem<custom_node> cm {};
-  cm.ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
+  context ctx {
+    .allocator = lispy::allocator<custom_node>(),
+  };
+  ctx.fns["add"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
 
     auto a = eval<custom_node>(ctx, aa[0]);
@@ -37,7 +39,7 @@ void run() {
     nn->is_val = true;
     return nn;
   };
-  cm.ctx.fns["pr"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
+  ctx.fns["pr"] = [](auto ctx, auto n, auto aa, auto as) -> const node * {
     for (auto i = 0; i < as; i++) {
       auto a = eval<custom_node>(ctx, aa[i]);
       put(a->is_val ? a->val : to_i(a), " ");
@@ -46,7 +48,7 @@ void run() {
     return n;
   };
 
-  run(src, cm.ctx);
+  run(src, ctx);
 }
 
 #ifdef LECO_TARGET_WASM
