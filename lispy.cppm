@@ -18,12 +18,14 @@ namespace lispy {
 
   class reader;
 
+  export struct context;
   export struct node : no::move {
     jute::view atom {};
     const node * list {};
     const node * next {};
     const reader * r {};
     unsigned loc {};
+    context * ctx {};
 
     void * operator new(traits::size_t n, void * p) { return p; }
   };
@@ -57,8 +59,7 @@ namespace lispy {
   }
 #endif
 
-  export struct context;
-  using fn_t = const node * (*)(context & ctx, const node * n, const node * const * aa, unsigned as);
+  using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
   struct context {
     hai::fn<node *> allocator {};
     hashley::fin<const node *> defs { 127 };
@@ -86,12 +87,15 @@ namespace lispy {
   export template<traits::base_is<node> N> N * clone(context * ctx, const node * n) {
     return new (ctx->allocator()) N { *n };
   }
+  export template<traits::base_is<node> N> N * clone(const node * n) {
+    return clone<N>(n->ctx, n);
+  }
 
-  export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context & ctx, const node * n) {
+  export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context * ctx, const node * n) {
     return static_cast<const N *>(eval<node>(ctx, n));
   }
-  export template<> [[nodiscard]] const node * eval<node>(context & ctx, const node * n);
+  export template<> [[nodiscard]] const node * eval<node>(context * ctx, const node * n);
 
-  export void run(jute::view source, context & ctx);
+  export void run(jute::view source, context * ctx);
 }
 

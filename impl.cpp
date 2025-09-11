@@ -79,10 +79,11 @@ static jute::view next_token(lispy::reader & r) {
   return {};
 }
 
-static lispy::node * next_list(lispy::context & ctx, lispy::reader & r) {
-  auto * res = new (ctx.allocator()) lispy::node {
+static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
+  auto * res = new (ctx->allocator()) lispy::node {
     .r = &r,
     .loc = r.loc(),
+    .ctx = ctx,
   };
   auto * n = &res->list;
   while (r) {
@@ -92,17 +93,18 @@ static lispy::node * next_list(lispy::context & ctx, lispy::reader & r) {
 
     auto nn = (token == "(") ?
       next_list(ctx, r) :
-      new (ctx.allocator()) lispy::node {
+      new (ctx->allocator()) lispy::node {
         .atom = token,
         .r = &r,
         .loc = static_cast<unsigned>(r.loc() - token.size()),
+        .ctx = ctx,
       };
     *n = nn;
     n = &(nn->next);
   }
   err(res, "unbalanced open parenthesis");
 }
-static lispy::node * next_node(lispy::context & ctx, lispy::reader & r) {
+static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   if (!r) return {};
 
   auto token = next_token(r);
@@ -111,10 +113,11 @@ static lispy::node * next_node(lispy::context & ctx, lispy::reader & r) {
   } else if (token == ")") {
     r.err("unbalanced close parenthesis");
   } else {
-    return new (ctx.allocator()) lispy::node { 
+    return new (ctx->allocator()) lispy::node { 
       .atom = token,
       .r = &r,
       .loc = static_cast<unsigned>(r.loc() - token.size()),
+      .ctx = ctx,
     };
   }
 }
@@ -125,7 +128,7 @@ static auto ls(const lispy::node * n) {
   return sz;
 }
 
-template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context & ctx, const lispy::node * n) {
+template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context * ctx, const lispy::node * n) {
   if (!n->list) return n;
   if (!is_atom(n->list)) err(n->list, "expecting an atom");
 
@@ -136,7 +139,7 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
 
     auto args = n->list->next;
     if (!is_atom(args)) err(args, "def name must be an atom");
-    ctx.defs[args->atom] = args->next;
+    ctx->defs[args->atom] = args->next;
     return args->next;
   }
 
@@ -145,16 +148,16 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   auto ap = aa;
   for (auto nn = n->list->next; nn; nn = nn->next) *ap++ = nn;
   
-  if (ctx.fns.has(fn)) {
-    return ctx.fns[fn](ctx, n, aa, ap - aa);
-  } else if (ctx.defs.has(fn)) {
-    return eval<node>(ctx, ctx.defs[fn]);
+  if (ctx->fns.has(fn)) {
+    return ctx->fns[fn](n, aa, ap - aa);
+  } else if (ctx->defs.has(fn)) {
+    return eval<node>(ctx, ctx->defs[fn]);
   } else {
     err(n, *("invalid function name: "_hs + fn));
   }
 }
 
-void lispy::run(jute::view source, lispy::context & ctx) {
+void lispy::run(jute::view source, lispy::context * ctx) {
   reader r { source };
   while (r) auto _ = eval<node>(ctx, next_node(ctx, r));
 }
