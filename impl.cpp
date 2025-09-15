@@ -25,7 +25,7 @@ public:
     return m_data[m_pos++];
   }
 
-  [[noreturn]] void err(jute::view msg, unsigned loc) const {
+  [[noreturn]] void err(jute::heap msg, unsigned loc) const {
     unsigned l = 1;
     unsigned last = 0;
     for (auto i = 0; i < loc; i++) {
@@ -36,7 +36,7 @@ public:
     }
     fail({ msg, l, loc - last });
   }
-  [[noreturn]] void err(jute::view msg) const {
+  [[noreturn]] void err(jute::heap msg) const {
     err(msg, m_pos);
   }
 
@@ -45,8 +45,8 @@ public:
   }
 };
 
-void lispy::err(const lispy::node * n, jute::view msg) { n->r->err(msg, n->loc); }
-void lispy::err(const lispy::node * n, jute::view msg, unsigned rloc) { n->r->err(msg, n->loc + rloc); }
+void lispy::err(const lispy::node * n, jute::heap msg) { n->r->err(msg, n->loc); }
+void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { n->r->err(msg, n->loc + rloc); }
 
 static bool is_atom_char(char c) {
   return c > ' ' && c <= '~' && c != ';' && c != '(' && c != ')';
@@ -153,7 +153,7 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   } else if (ctx->defs.has(fn)) {
     return eval<node>(ctx, ctx->defs[fn]);
   } else {
-    err(n, *("invalid function name: "_hs + fn));
+    err(n, "invalid function name: "_hs + fn);
   }
 }
 
