@@ -152,11 +152,11 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   if (fn == "do") {
     if (ap == aa) err(n, "'do' requires at least a parameter");
     const node * res;
-    for (auto i = 0; i < ap - aa; i++) res = eval<node>(n->ctx, aa[i]);
+    for (auto i = 0; i < ap - aa; i++) res = eval<node>(ctx, aa[i]);
     return res;
   } else if (fn == "random") {
     if (ap == aa) err(n, "random requires at least a parameter");
-    return eval<node>(n->ctx, aa[rng::rand(ap - aa)]);
+    return eval<node>(ctx, aa[rng::rand(ap - aa)]);
   } else if (ctx->fns.has(fn)) {
     return ctx->fns[fn](n, aa, ap - aa);
   } else if (ctx->defs.has(fn)) {
