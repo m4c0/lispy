@@ -1,4 +1,5 @@
 module lispy;
+import rng;
 
 using namespace jute::literals;
 
@@ -147,8 +148,16 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   if (ls(n) >= 127) err(n, "too many parameters");
   auto ap = aa;
   for (auto nn = n->list->next; nn; nn = nn->next) *ap++ = nn;
-  
-  if (ctx->fns.has(fn)) {
+
+  if (fn == "do") {
+    if (ap == aa) err(n, "'do' requires at least a parameter");
+    const node * res;
+    for (auto i = 0; i < ap - aa; i++) res = eval<node>(n->ctx, aa[i]);
+    return res;
+  } else if (fn == "random") {
+    if (ap == aa) err(n, "random requires at least a parameter");
+    return eval<node>(n->ctx, aa[rng::rand(ap - aa)]);
+  } else if (ctx->fns.has(fn)) {
     return ctx->fns[fn](n, aa, ap - aa);
   } else if (ctx->defs.has(fn)) {
     return eval<node>(ctx, ctx->defs[fn]);

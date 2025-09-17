@@ -14,6 +14,10 @@ static constexpr jute::view src = R"(
   (pr
     (add 3 5)
     (add (add 1 1) (add 2 1)))
+  (pr
+    (do
+      (pr 1)
+      (pr (random 2 3 4))))
 )";
 
 struct custom_node : node {
@@ -40,12 +44,13 @@ void run() {
     return nn;
   };
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
+    auto res = static_cast<const custom_node *>(n);
     for (auto i = 0; i < as; i++) {
-      auto a = eval<custom_node>(n->ctx, aa[i]);
-      put(a->is_val ? a->val : to_i(a), " ");
+      res = eval<custom_node>(n->ctx, aa[i]);
+      put(res->is_val ? res->val : to_i(res), " ");
     }
     putln();
-    return n;
+    return res;
   };
 
   run(src, &ctx);
