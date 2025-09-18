@@ -166,8 +166,10 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   }
 }
 
-void lispy::run(jute::view source, lispy::context * ctx) {
+template<> const lispy::node * lispy::run<lispy::node>(jute::view source, lispy::context * ctx) {
   reader r { source };
-  while (r) auto _ = eval<node>(ctx, next_node(ctx, r));
+  const node * n = nullptr;
+  while (r) n = eval<node>(ctx, next_node(ctx, r));
+  return n;
 }
 

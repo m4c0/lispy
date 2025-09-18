@@ -53,7 +53,7 @@ void run() {
     return res;
   };
 
-  run(src, &ctx);
+  run<node>(src, &ctx);
 }
 
 #ifdef LECO_TARGET_WASM

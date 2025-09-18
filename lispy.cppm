@@ -96,6 +96,9 @@ namespace lispy {
   }
   export template<> [[nodiscard]] const node * eval<node>(context * ctx, const node * n);
 
-  export void run(jute::view source, context * ctx);
+  export template<traits::base_is<node> N> const N * run(jute::view source, context * ctx) {
+    return static_cast<const N *>(run<node>(source, ctx));
+  }
+  export template<> const node * run<node>(jute::view source, context * ctx);
 }
 

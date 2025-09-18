@@ -55,7 +55,7 @@ void run() {
     return nn;
   };
 
-  run(src, &ctx);
+  run<node>(src, &ctx);
 
   for (auto fn : ctx.jits) (*fn)();
 }
