@@ -21,10 +21,8 @@ struct custom_node : node {
 };
 
 void run() {
-  struct context : lispy::context {
-    hai::varray<sfn_t> jits { 8 };
-  } ctx {
-    { .allocator = lispy::allocator<custom_node>() },
+  lispy::context ctx {
+    .allocator = lispy::allocator<custom_node>(),
   };
   ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
     hai::array<sfn_t> fns { as };
@@ -35,7 +33,9 @@ void run() {
     auto * nn = clone<custom_node>(n);
     nn->fn = sfn_t{new fn_t{[fns=traits::move(fns)] mutable {
       auto res = 0;
-      for (auto fn : fns) res = (*fn)();
+      for (auto fn : fns) {
+        res = (*fn)();
+      }
       return res;
     }}};
     return nn;
@@ -67,7 +67,6 @@ void run() {
       putln(i);
       return i;
     }}};
-    static_cast<context *>(n->ctx)->jits.push_back(nn->fn);
     return nn;
   };
 
