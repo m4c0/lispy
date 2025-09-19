@@ -8,8 +8,10 @@ import print;
 using namespace lispy;
 
 static constexpr jute::view src = R"(
+(do
   (pr (add 3 5))
   (pr (add (add 1 1) (add 2 1)))
+)
 )";
 
 using fn_t = hai::fn<int>;
@@ -23,6 +25,20 @@ void run() {
     hai::varray<sfn_t> jits { 8 };
   } ctx {
     { .allocator = lispy::allocator<custom_node>() },
+  };
+  ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
+    hai::array<sfn_t> fns { as };
+    for (auto i = 0; i < as; i++) {
+      fns[i] = eval<custom_node>(n->ctx, aa[i])->fn;
+    }
+
+    auto * nn = clone<custom_node>(n);
+    nn->fn = sfn_t{new fn_t{[fns=traits::move(fns)] mutable {
+      auto res = 0;
+      for (auto fn : fns) res = (*fn)();
+      return res;
+    }}};
+    return nn;
   };
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
@@ -55,9 +71,9 @@ void run() {
     return nn;
   };
 
-  run<node>(src, &ctx);
-
-  for (auto fn : ctx.jits) (*fn)();
+  sfn_t fn = run<custom_node>(src, &ctx)->fn;
+  if (fn) (*fn)();
+  else die("missing main function");
 }
 
 int main() try {
