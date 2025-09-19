@@ -113,7 +113,9 @@ static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   if (!r) return {};
 
   auto token = next_token(r);
-  if (token == "(") {
+  if (token == "") {
+    return {};
+  } else if (token == "(") {
     return next_list(ctx, r);
   } else if (token == ")") {
     r.err("unbalanced close parenthesis");
@@ -173,7 +175,10 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
 template<> const lispy::node * lispy::run<lispy::node>(jute::view source, lispy::context * ctx) {
   reader r { source };
   const node * n = nullptr;
-  while (r) n = eval<node>(ctx, next_node(ctx, r));
+  while (r) {
+    auto nn = next_node(ctx, r);
+    if (nn) n = eval<node>(ctx, nn);
+  }
   return n;
 }
 
