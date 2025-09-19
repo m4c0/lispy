@@ -3,6 +3,19 @@ import rng;
 
 using namespace jute::literals;
 
+[[noreturn]] static void err(jute::view src, jute::heap msg, unsigned loc) {
+  unsigned l = 1;
+  unsigned last = 0;
+  for (auto i = 0; i < loc; i++) {
+    if (src[i] == '\n') {
+      last = i;
+      l++;
+    }
+  }
+  lispy::fail({ msg, l, loc - last });
+}
+
+namespace lispy { class reader; }
 class lispy::reader : no::no {
   jute::view m_data;
   unsigned m_pos {};
@@ -14,6 +27,7 @@ public:
     return m_pos < m_data.size();
   }
 
+  jute::view data() const { return m_data; }
   unsigned loc() const { return m_pos; }
   const char * mark() const { return m_data.begin() + m_pos; }
 
@@ -26,19 +40,8 @@ public:
     return m_data[m_pos++];
   }
 
-  [[noreturn]] void err(jute::heap msg, unsigned loc) const {
-    unsigned l = 1;
-    unsigned last = 0;
-    for (auto i = 0; i < loc; i++) {
-      if (m_data[i] == '\n') {
-        last = i;
-        l++;
-      }
-    }
-    fail({ msg, l, loc - last });
-  }
   [[noreturn]] void err(jute::heap msg) const {
-    err(msg, m_pos);
+    ::err(m_data, msg, m_pos);
   }
 
   jute::view token(const char * start) const {
@@ -47,8 +50,8 @@ public:
 };
  
 void lispy::err(jute::heap msg) { fail({ msg, 1, 1 }); }
-void lispy::err(const lispy::node * n, jute::heap msg) { n->r->err(msg, n->loc); }
-void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { n->r->err(msg, n->loc + rloc); }
+void lispy::err(const lispy::node * n, jute::heap msg) { ::err(n->src, msg, n->loc); }
+void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { ::err(n->src, msg, n->loc + rloc); }
 
 static bool is_atom_char(char c) {
   return c > ' ' && c <= '~' && c != ';' && c != '(' && c != ')';
@@ -83,7 +86,7 @@ static jute::view next_token(lispy::reader & r) {
 
 static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
   auto * res = new (ctx->allocator()) lispy::node {
-    .r = &r,
+    .src = r.data(),
     .loc = r.loc(),
     .ctx = ctx,
   };
@@ -97,7 +100,7 @@ static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
       next_list(ctx, r) :
       new (ctx->allocator()) lispy::node {
         .atom = token,
-        .r = &r,
+        .src = r.data(),
         .loc = static_cast<unsigned>(r.loc() - token.size()),
         .ctx = ctx,
       };
@@ -117,7 +120,7 @@ static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   } else {
     return new (ctx->allocator()) lispy::node { 
       .atom = token,
-      .r = &r,
+      .src = r.data(),
       .loc = static_cast<unsigned>(r.loc() - token.size()),
       .ctx = ctx,
     };

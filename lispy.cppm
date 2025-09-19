@@ -16,14 +16,12 @@ namespace lispy {
     unsigned col;
   };
 
-  class reader;
-
   export struct context;
   export struct node : no::move {
     jute::view atom {};
     const node * list {};
     const node * next {};
-    const reader * r {};
+    jute::view src {};
     unsigned loc {};
     context * ctx {};
 
