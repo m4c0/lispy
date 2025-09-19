@@ -45,7 +45,8 @@ public:
     return { start, static_cast<unsigned>(mark() - start) };
   }
 };
-
+ 
+void lispy::err(jute::heap msg) { fail({ msg, 1, 1 }); }
 void lispy::err(const lispy::node * n, jute::heap msg) { n->r->err(msg, n->loc); }
 void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { n->r->err(msg, n->loc + rloc); }
 

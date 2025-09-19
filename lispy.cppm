@@ -30,6 +30,7 @@ namespace lispy {
     void * operator new(traits::size_t n, void * p) { return p; }
   };
 
+  export [[noreturn]] void err(jute::heap msg);
   export [[noreturn]] void err(const lispy::node * n, jute::heap msg);
   export [[noreturn]] void err(const lispy::node * n, jute::heap msg, unsigned rloc);
 
