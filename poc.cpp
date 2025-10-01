@@ -18,12 +18,23 @@ static constexpr jute::view src = R"(
     (do
       (pr 1)
       (pr (random 2 3 4))))
+  (pr (sub 69 34))
 )";
 
 struct custom_node : node {
   int val;
   bool is_val;
 };
+
+static const node * sub(const node * n, const custom_node * a, const custom_node * b) {
+  auto ai = a->is_val ? a->val : to_i(a);
+  auto bi = b->is_val ? b->val : to_i(b);
+
+  auto * res = clone<custom_node>(n);
+  res->val = ai - bi;
+  res->is_val = true;
+  return res;
+}
 
 void run() {
   context ctx {
@@ -43,6 +54,7 @@ void run() {
     nn->is_val = true;
     return nn;
   };
+  ctx.fns["sub"] = wrap<custom_node, sub>;
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     auto res = static_cast<const custom_node *>(n);
     for (auto i = 0; i < as; i++) {

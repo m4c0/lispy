@@ -99,5 +99,33 @@ namespace lispy {
     return static_cast<const N *>(run<node>(source, ctx));
   }
   export template<> const node * run<node>(jute::view source, context * ctx);
+
+  template<unsigned... Is> struct seq {};
+
+  template<unsigned I, unsigned N, unsigned... Is> struct seq_helper {
+    using type = typename seq_helper<I + 1, N, Is..., I>::type;
+  };
+  template<unsigned N, unsigned... Is> struct seq_helper<N, N, Is...> {
+    using type = seq<Is...>;
+  };
+  template<typename... Args> constexpr auto make_seq() -> typename seq_helper<0, sizeof...(Args)>::type {
+    return {};
+  }
+
+  template<typename Node, unsigned... I>
+  const node * call(auto fn, const node * n, const node * const * aa, seq<I...>) {
+    const Node * ee[] { eval<Node>(n->ctx, aa[I])... };
+    return fn(n, ee[I]...);
+  }
+
+  template<typename Node, typename... Args>
+  const node * wrap_fn(const node * (*fn)(const node *, Args...), const node * n, const node * const * aa, unsigned as) {
+    if (as != sizeof...(Args)) err(n, "invalid number of parameters");
+    return call<Node>(fn, n, aa, make_seq<Args...>());
+  }
+  export template<typename Node, auto Fn>
+  const node * wrap(const node * n, const node * const * aa, unsigned as) {
+    return wrap_fn<Node>(Fn, n, aa, as);
+  }
 }
 
