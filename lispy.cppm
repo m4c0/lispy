@@ -129,5 +129,16 @@ namespace lispy::experimental {
   const node * wrap(const node * n, const node * const * aa, unsigned as) {
     return wrap_fn<Node>(Fn, n, aa, as);
   }
+
+  export template<typename Node>
+  class basic_context : public context {
+  public:
+    basic_context() : context {
+      .allocator = lispy::allocator<Node>(),
+    } {}
+
+    auto eval(const node * n) { return eval<Node>(this, n); }
+    auto run(jute::view src) { return run<Node>(src, this); }
+  };
 }
 
