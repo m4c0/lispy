@@ -5,6 +5,7 @@ import lispy;
 import print;
 
 using namespace lispy;
+using namespace lispy::experimental;
 
 struct custom_node : public lispy::node {
   jute::view (custom_node::*attr) {};
@@ -12,33 +13,13 @@ struct custom_node : public lispy::node {
   jute::view author {};
 };
 
-template<typename T>
-auto clony(const node * n, jute::view (T::*A)) {
-  return clone<T>(n);
-}
-template<auto Attr, auto A>
-const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
-  if (as != 1) lispy::err(n, "Expecting a single parameter");
-
-  auto nn = clony(n, A);
-  nn->atom = aa[0]->atom;
-  nn->*Attr = A;
-  return nn;
-}
-
 int main() try {
-  experimental::basic_context<custom_node> ctx {};
+  basic_context<custom_node> ctx {};
   ctx.fns["music"] = [](auto n, auto aa, auto as) -> const node * {
-    experimental::basic_context<custom_node> ctx { n->ctx->allocator };
+    basic_context<custom_node> ctx { n->ctx->allocator };
     ctx.fns["title"]  = mem_fn<&custom_node::attr, &custom_node::title>;
     ctx.fns["author"] = mem_fn<&custom_node::attr, &custom_node::author>;
-
-    auto nn = clone<custom_node>(n);
-    for (auto i = 0; i < as; i++) {
-      auto nat = ctx.eval(aa[i]);
-      if (nat->attr) nn->*(nat->attr) = nat->atom;
-    }
-    return nn;
+    return fill_clone<custom_node>(&ctx, n, aa, as);
   };
   auto res = ctx.run(R"(
     (music

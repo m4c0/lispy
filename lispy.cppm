@@ -142,5 +142,29 @@ namespace lispy::experimental {
     auto eval(const node * n) { return eval<Node>(this, n); }
     auto run(jute::view src) { return run<Node>(src, this); }
   };
+
+  template<typename T>
+  auto clony(const node * n, jute::view (T::*A)) {
+    return clone<T>(n);
+  }
+  export template<auto Attr, auto A>
+  const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
+    if (as != 1) lispy::err(n, "Expecting a single parameter");
+
+    auto nn = clony(n, A);
+    nn->atom = aa[0]->atom;
+    nn->*Attr = A;
+    return nn;
+  }
+
+  export template<typename T>
+  T * fill_clone(context * ctx, const node * n, auto aa, auto as) {
+    auto nn = clone<T>(n);
+    for (auto i = 0; i < as; i++) {
+      auto nat = eval<T>(ctx, aa[i]);
+      if (nat->attr) nn->*(nat->attr) = nat->atom;
+    }
+    return nn;
+  }
 }
 
