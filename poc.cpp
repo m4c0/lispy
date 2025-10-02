@@ -9,6 +9,7 @@ import lispy;
 import print;
 
 using namespace lispy;
+using namespace lispy::experimental;
 
 static constexpr jute::view src = R"(
   (pr

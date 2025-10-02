@@ -99,7 +99,9 @@ namespace lispy {
     return static_cast<const N *>(run<node>(source, ctx));
   }
   export template<> const node * run<node>(jute::view source, context * ctx);
+}
 
+namespace lispy::experimental {
   template<unsigned... Is> struct seq {};
 
   template<unsigned I, unsigned N, unsigned... Is> struct seq_helper {
