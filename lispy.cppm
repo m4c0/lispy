@@ -133,10 +133,12 @@ namespace lispy::experimental {
   export template<typename Node>
   class basic_context : public context {
   public:
-    basic_context() : context {
-      .allocator = lispy::allocator<Node>(),
+    basic_context() : basic_context { lispy::allocator<Node>() } {}
+    explicit basic_context(hai::fn<node *> allocator) : context {
+      .allocator = allocator,
     } {}
 
+    auto clone(const node * n) { return clone<Node>(this, n); }
     auto eval(const node * n) { return eval<Node>(this, n); }
     auto run(jute::view src) { return run<Node>(src, this); }
   };
