@@ -144,16 +144,23 @@ namespace lispy::experimental {
   };
 
   template<typename T>
-  auto clony(const node * n, jute::view (T::*A)) {
+  auto clony(const node * n, auto (T::*A)) {
     return clone<T>(n);
   }
-  export template<auto Attr, auto A>
+  export template<auto Attr, auto A, auto ConvFn>
   const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
     if (as != 1) lispy::err(n, "Expecting a single parameter");
 
-    auto nn = clony(n, A);
-    nn->atom = aa[0]->atom;
-    nn->*Attr = A;
+    auto nn = clony(aa[0], Attr);
+    nn->*Attr = [](auto * self, auto * n) { self->*A = ConvFn(n); };;
+    return nn;
+  }
+  export template<auto Attr, auto A>
+  const node * mem_attr(const node * n, const node * const * aa, unsigned as) {
+    if (as != 1) lispy::err(n, "Expecting a single parameter");
+
+    auto nn = clony(aa[0], Attr);
+    nn->*Attr = [](auto * self, auto * n) { self->*A = n->atom; };
     return nn;
   }
 
@@ -162,7 +169,7 @@ namespace lispy::experimental {
     auto nn = clone<T>(n);
     for (auto i = 0; i < as; i++) {
       auto nat = eval<T>(ctx, aa[i]);
-      if (nat->attr) nn->*(nat->attr) = nat->atom;
+      if (nat->attr) (nat->attr)(nn, nat);
     }
     return nn;
   }
