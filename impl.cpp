@@ -137,7 +137,7 @@ static auto ls(const lispy::node * n) {
 
 template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context * ctx, const lispy::node * n) {
   if (!n->list) return n;
-  if (!is_atom(n->list)) err(n->list, "expecting an atom");
+  if (!is_atom(n->list)) err(n->list, "expecting an atom as a function name");
 
   auto fn = n->list->atom;
 
