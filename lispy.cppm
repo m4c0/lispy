@@ -147,12 +147,20 @@ namespace lispy::experimental {
   auto clony(const node * n, auto (T::*A)) {
     return clone<T>(n);
   }
+  export template<auto Attr, auto A>
+  const node * mem_flag(const node * n, const node * const * aa, unsigned as) {
+    if (as != 0) lispy::err(n, "Expecting no parameter");
+
+    auto nn = clony(n, Attr);
+    nn->*Attr = [](auto * self, auto * n) { self->*A = true; };
+    return nn;
+  }
   export template<auto Attr, auto A, auto ConvFn>
   const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
     if (as != 1) lispy::err(n, "Expecting a single parameter");
 
     auto nn = clony(aa[0], Attr);
-    nn->*Attr = [](auto * self, auto * n) { self->*A = ConvFn(n); };;
+    nn->*Attr = [](auto * self, auto * n) { self->*A = ConvFn(n); };
     return nn;
   }
   export template<auto Attr, auto A>
