@@ -147,6 +147,14 @@ namespace lispy::experimental {
   auto clony(const node * n, auto (T::*A)) {
     return clone<T>(n);
   }
+  export template<auto Attr, auto Fn>
+  const node * mem_set(const node * n, const node * const * aa, unsigned as) {
+    if (as != 0) lispy::err(n, "Expecting no parameter");
+
+    auto nn = clony(n, Attr);
+    nn->*Attr = Fn;
+    return nn;
+  }
   export template<auto Attr, auto A>
   const node * mem_flag(const node * n, const node * const * aa, unsigned as) {
     if (as != 0) lispy::err(n, "Expecting no parameter");
