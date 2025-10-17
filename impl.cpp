@@ -1,3 +1,6 @@
+module;
+#include <stdio.h>
+
 module lispy;
 import rng;
 
@@ -52,6 +55,16 @@ public:
 void lispy::err(jute::heap msg) { fail({ msg, 1, 1 }); }
 void lispy::err(const lispy::node * n, jute::heap msg) { ::err(n->src, msg, n->loc); }
 void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { ::err(n->src, msg, n->loc + rloc); }
+
+hai::cstr lispy::to_file_err(jute::view filename, const lispy::parser_error & e) {
+  char msg[128] {};
+  auto len = snprintf(msg, sizeof(msg), "%.*s:%d:%d: %.*s",
+      static_cast<unsigned>(filename.size()), filename.begin(),
+      e.line, e.col,
+      static_cast<unsigned>(e.msg.size()), e.msg.begin());
+  if (len > 0) return jute::view { msg, static_cast<unsigned>(len) }.cstr();
+  else return (*e.msg).cstr();
+}
 
 static bool is_atom_char(char c) {
   return c > ' ' && c <= '~' && c != ';' && c != '(' && c != ')';

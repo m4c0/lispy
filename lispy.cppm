@@ -32,6 +32,8 @@ namespace lispy {
   export [[noreturn]] void err(const lispy::node * n, jute::heap msg);
   export [[noreturn]] void err(const lispy::node * n, jute::heap msg, unsigned rloc);
 
+  export hai::cstr to_file_err(jute::view filename, const parser_error & e);
+
   export constexpr bool is_atom(const node * n) { return n->atom.size(); }
 
   export float to_f(const node * n) {
