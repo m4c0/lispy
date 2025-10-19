@@ -15,9 +15,14 @@ void run() {
     putln();
     return n;
   };
-  ctx.run("(def X x) (def Y (X))");
+  ctx.run("(def X (random a b c)) (def Y (X))");
 
-  ctx.run("(def Z (Y)) (pr (X) (Y) (Z))");
+  basic_context<cnode> ctx2 {};
+  ctx2.parent = &ctx;
+  ctx2.fns["echo"] = [](auto n, auto aa, auto as) -> const node * {
+    return eval<cnode>(n->ctx, aa[0]);
+  };
+  ctx2.run("(def Z (Y)) (pr (echo (X)) (Y) (Z))");
 }
 
 int main() try {

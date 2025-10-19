@@ -65,6 +65,7 @@ namespace lispy {
     hai::fn<node *> allocator {};
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
+    const context * parent {};
   };
 
   export

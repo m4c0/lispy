@@ -148,6 +148,18 @@ static auto ls(const lispy::node * n) {
   return sz;
 }
 
+static inline lispy::fn_t find_fn(const lispy::context * ctx, jute::view fn) {
+  if (ctx->fns.has(fn)) return ctx->fns[fn];
+  else if (ctx->parent) return find_fn(ctx->parent, fn);
+  else return nullptr;
+}
+
+static inline const lispy::node * find_def(const lispy::context * ctx, jute::view fn) {
+  if (ctx->defs.has(fn)) return ctx->defs[fn];
+  else if (ctx->parent) return find_def(ctx->parent, fn);
+  else return nullptr;
+}
+
 template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context * ctx, const lispy::node * n) {
   if (!n->list) return n;
   if (!is_atom(n->list)) err(n->list, "expecting an atom as a function name");
@@ -168,8 +180,8 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   auto ap = aa;
   for (auto nn = n->list->next; nn; nn = nn->next) *ap++ = nn;
 
-  if (ctx->fns.has(fn)) {
-    return ctx->fns[fn](n, aa, ap - aa);
+  if (auto f = find_fn(ctx, fn)) {
+    return f(n, aa, ap - aa);
   } else if (fn == "do") {
     if (ap == aa) err(n, "'do' requires at least a parameter");
     const node * res;
@@ -178,8 +190,8 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   } else if (fn == "random") {
     if (ap == aa) err(n, "random requires at least a parameter");
     return eval<node>(ctx, aa[rng::rand(ap - aa)]);
-  } else if (ctx->defs.has(fn)) {
-    return eval<node>(ctx, ctx->defs[fn]);
+  } else if (auto d = find_def(ctx, fn)) {
+    return eval<node>(ctx, d);
   } else {
     err(n, "invalid function name: "_hs + fn);
   }
