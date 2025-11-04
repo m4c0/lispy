@@ -73,6 +73,13 @@ static jute::view next_atom_token(const char * start, lispy::reader & r) {
   while (is_atom_char(r.peek())) r.take();
   return r.token(start);
 }
+static jute::view next_string_token(const char * start, lispy::reader & r) {
+  while (r && r.peek() != '"') r.take();
+  if (!r.peek()) r.err("string not closed");
+  auto res = r.token(start + 1);
+  r.take(); // consume '"'
+  return res;
+}
 static void comment(lispy::reader & r) {
   while (r && r.take() != '\n') continue;
 }
@@ -86,6 +93,7 @@ static jute::view next_token(lispy::reader & r) {
       case ' ': break;
       case '(': return r.token(start);
       case ')': return r.token(start);
+      case '"': return next_string_token(start, r);
       case ';': comment(r); break;
       default: {
         if (is_atom_char(c)) return next_atom_token(start, r);

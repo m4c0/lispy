@@ -35,14 +35,14 @@ int main() try {
       (checked)
       (rate 1)
       (title Thriller)
-      (author M.Jackson))
+      (author "Mike Jackson"))
   )");
   if (res->title  != "Thriller")  err("missing title");
-  if (res->author != "M.Jackson") err("missing author");
+  if (res->author != "Mike Jackson") err("missing author");
   if (!res->approved) err("not approved");
   if (!res->checked)  err("not checked");
   if (res->rate != 1) err("wrong rate");
 } catch (const parser_error & e) {
-  errfn("line %d col %d: %s", e.line, e.col, e.msg.begin());
+  errfn("line %d col %d - %s", e.line, e.col, e.msg.begin());
   return 1;
 }
