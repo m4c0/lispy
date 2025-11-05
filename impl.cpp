@@ -6,7 +6,7 @@ import rng;
 
 using namespace jute::literals;
 
-[[noreturn]] static void err(jute::view src, jute::heap msg, unsigned loc) {
+[[noreturn]] static void err(jute::view src, jute::view msg, unsigned loc) {
   unsigned l = 1;
   unsigned last = 0;
   for (auto i = 0; i < loc; i++) {
@@ -15,7 +15,7 @@ using namespace jute::literals;
       l++;
     }
   }
-  lispy::fail({ msg, l, loc - last });
+  lispy::fail({ msg.cstr(), l, loc - last });
 }
 
 namespace lispy { class reader; }
@@ -52,9 +52,9 @@ public:
   }
 };
  
-void lispy::err(jute::heap msg) { fail({ msg, 1, 1 }); }
-void lispy::err(const lispy::node * n, jute::heap msg) { ::err(n->src, msg, n->loc); }
-void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { ::err(n->src, msg, n->loc + rloc); }
+void lispy::err(jute::view msg) { fail({ msg.cstr(), 1, 1 }); }
+void lispy::err(const lispy::node * n, jute::view msg) { ::err(n->src, msg, n->loc); }
+void lispy::err(const lispy::node * n, jute::view msg, unsigned rloc) { ::err(n->src, msg, n->loc + rloc); }
 
 hai::cstr lispy::to_file_err(jute::view filename, const lispy::parser_error & e) {
   char msg[128] {};
@@ -63,7 +63,7 @@ hai::cstr lispy::to_file_err(jute::view filename, const lispy::parser_error & e)
       e.line, e.col,
       static_cast<unsigned>(e.msg.size()), e.msg.begin());
   if (len > 0) return jute::view { msg, static_cast<unsigned>(len) }.cstr();
-  else return (*e.msg).cstr();
+  else return jute::view { e.msg }.cstr(); // TODO: can we avoid the double-copy?
 }
 
 static bool is_atom_char(char c) {
@@ -201,7 +201,7 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   } else if (auto d = find_def(ctx, fn)) {
     return eval<node>(ctx, d);
   } else {
-    err(n, "invalid function name: "_hs + fn);
+    err(n, ("invalid function name: "_s + fn).cstr());
   }
 }
 

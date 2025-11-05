@@ -11,7 +11,7 @@ import vaselin;
 
 namespace lispy {
   export struct parser_error {
-    jute::heap msg;
+    hai::cstr msg;
     unsigned line;
     unsigned col;
   };
@@ -28,9 +28,9 @@ namespace lispy {
     void * operator new(traits::size_t n, void * p) { return p; }
   };
 
-  export [[noreturn]] void err(jute::heap msg);
-  export [[noreturn]] void err(const lispy::node * n, jute::heap msg);
-  export [[noreturn]] void err(const lispy::node * n, jute::heap msg, unsigned rloc);
+  export [[noreturn]] void err(jute::view msg);
+  export [[noreturn]] void err(const lispy::node * n, jute::view msg);
+  export [[noreturn]] void err(const lispy::node * n, jute::view msg, unsigned rloc);
 
   export hai::cstr to_file_err(jute::view filename, const parser_error & e);
 
