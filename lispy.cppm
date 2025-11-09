@@ -48,6 +48,12 @@ namespace lispy {
     if (!ok) err(n, "invalid number");
     return v;
   }
+  export unsigned to_u32(const node * n) {
+    if (!is_atom(n)) err(n, "expecting non-negative number");
+    auto [v, ok] = jute::to_u32(n->atom);
+    if (!ok) err(n, "invalid non-negative number");
+    return v;
+  }
 
 #ifdef LECO_TARGET_WASM
   export [[noreturn]] void fail(parser_error err) {
