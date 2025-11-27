@@ -205,13 +205,18 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
   }
 }
 
-template<> const lispy::node * lispy::run<lispy::node>(jute::view source, lispy::context * ctx) {
-  reader r { jute::heap { source } };
-  const node * n = nullptr;
+void lispy::each(jute::view src, lispy::context * ctx, hai::fn<void, lispy::context *, const lispy::node *> fn) {
+  reader r { jute::heap { src } };
   while (r) {
-    auto nn = next_node(ctx, r);
-    if (nn) n = eval<node>(ctx, nn);
+    const node * nn = next_node(ctx, r);
+    if (nn) fn(ctx, nn);
   }
-  return n;
 }
 
+template<> const lispy::node * lispy::run<lispy::node>(jute::view source, lispy::context * ctx) {
+  const node * n = nullptr;
+  each(source, ctx, [&](auto ctx, auto nn) {
+    n = eval<node>(ctx, nn);
+  });
+  return n;
+}

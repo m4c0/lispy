@@ -7,6 +7,22 @@ import print;
 
 using namespace lispy;
 
+using jit_t = hai::fn<void>;
+jit_t compile(jute::view source) {
+  context ctx { allocator<node>() };
+
+  hai::chain<jit_t> subs { 16 };
+  lispy::each(source, &ctx, [](auto, auto) {
+    putln("o");
+  });
+
+  return [subs=traits::move(subs)]() mutable {
+    for (auto & fn : subs) {
+      fn();
+    }
+  };
+}
+
 static constexpr jute::view src = R"(
 (do
   (pr (add 3 5))
@@ -70,9 +86,7 @@ void run() {
     return nn;
   };
 
-  sfn_t fn = run<custom_node>(src, &ctx)->fn;
-  if (fn) (*fn)();
-  else die("missing main function");
+  compile(src)();
 }
 
 int main() try {

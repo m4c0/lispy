@@ -92,6 +92,8 @@ namespace lispy {
     };
   }
 
+  export void each(jute::view src, lispy::context * ctx, hai::fn<void, lispy::context *, const lispy::node *> fn);
+
   export template<traits::base_is<node> N> N * clone(context * ctx, const node * n) {
     return new (ctx->allocator()) N { *n };
   }
