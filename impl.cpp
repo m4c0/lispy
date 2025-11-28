@@ -20,27 +20,27 @@ using namespace jute::literals;
 
 namespace lispy { class reader; }
 class lispy::reader : no::no {
-  jute::view m_data;
+  jute::heap m_data;
   unsigned m_pos {};
 
 public:
-  explicit reader(jute::view data) : m_data { data } {}
+  explicit reader(jute::heap data) : m_data { data } {}
 
   explicit operator bool() const {
     return m_pos < m_data.size();
   }
 
-  jute::view data() const { return m_data; }
+  jute::heap data() const { return m_data; }
   unsigned loc() const { return m_pos; }
   const char * mark() const { return m_data.begin() + m_pos; }
 
   char peek() {
     if (m_pos >= m_data.size()) return 0;
-    return m_data[m_pos];
+    return (*m_data)[m_pos];
   }
   char take() {
     if (m_pos >= m_data.size()) return 0;
-    return m_data[m_pos++];
+    return (*m_data)[m_pos++];
   }
 
   [[noreturn]] void err(jute::heap msg) const {
@@ -206,7 +206,7 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::con
 }
 
 template<> const lispy::node * lispy::run<lispy::node>(jute::view source, lispy::context * ctx) {
-  reader r { source };
+  reader r { jute::heap { source } };
   const node * n = nullptr;
   while (r) {
     auto nn = next_node(ctx, r);

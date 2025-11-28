@@ -21,7 +21,7 @@ namespace lispy {
     jute::view atom {};
     const node * list {};
     const node * next {};
-    jute::view src {};
+    jute::heap src {};
     unsigned loc {};
     context * ctx {};
 
