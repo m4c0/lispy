@@ -85,23 +85,23 @@ namespace lispy {
 
   export
   template<traits::base_is<node> T>
-  class arena {
-    hai::array<T> buffer { 10240 };
-    T * current = buffer.begin();
-    alloc_t prev_arena;
+  class temp_arena : no::no {
+    hai::array<T> m_buffer { 10240 };
+    T * m_current = m_buffer.begin();
+    alloc_t m_prev_alloc = memory();
 
     node * alloc() {
       using namespace jute::literals;
-      if (current == buffer.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
-      return current++;
+      if (m_current == m_buffer.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
+      return m_current++;
     }
 
   public:
-    arena() : prev_arena { memory() } {
-      memory() = [this] { return alloc(); };
+    temp_arena() {
+      memory() = [this] { return this->alloc(); };
     }
-    ~arena() {
-      memory() = prev_arena;
+    ~temp_arena() {
+      memory() = m_prev_alloc;
     }
   };
 

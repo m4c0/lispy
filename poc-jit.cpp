@@ -37,7 +37,7 @@ struct custom_node : node {
 };
 
 void run() {
-  lispy::arena<custom_node> mem {};
+  lispy::temp_arena<custom_node> mem {};
   lispy::context ctx {};
   ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
     hai::array<sfn_t> fns { as };

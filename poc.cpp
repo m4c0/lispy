@@ -38,7 +38,7 @@ static const node * sub(const node * n, const custom_node * a, const custom_node
 }
 
 void run() {
-  arena<custom_node> a {};
+  temp_arena<custom_node> a {};
   context ctx {};
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");

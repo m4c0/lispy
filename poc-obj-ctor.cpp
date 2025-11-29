@@ -17,7 +17,7 @@ struct custom_node : public lispy::node {
 };
 
 int main() try {
-  arena<custom_node> a {};
+  temp_arena<custom_node> a {};
   basic_context<custom_node> ctx {};
   ctx.fns["music"] = [](auto n, auto aa, auto as) -> const node * {
     basic_context<custom_node> ctx {};
