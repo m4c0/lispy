@@ -9,7 +9,7 @@ using namespace lispy;
 
 using jit_t = hai::fn<void>;
 jit_t compile(jute::view source) {
-  context ctx { allocator<node>() };
+  context ctx {};
 
   hai::chain<jit_t> subs { 16 };
   lispy::each(source, &ctx, [](auto, auto) {
@@ -37,9 +37,8 @@ struct custom_node : node {
 };
 
 void run() {
-  lispy::context ctx {
-    .allocator = lispy::allocator<custom_node>(),
-  };
+  lispy::arena<custom_node> mem {};
+  lispy::context ctx {};
   ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
     hai::array<sfn_t> fns { as };
     for (auto i = 0; i < as; i++) {

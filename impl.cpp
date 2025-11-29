@@ -106,7 +106,7 @@ static jute::view next_token(lispy::reader & r) {
 }
 
 static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
-  auto * res = new (ctx->allocator()) lispy::node {
+  auto * res = new (lispy::alloc()) lispy::node {
     .src = r.data(),
     .loc = r.loc(),
     .ctx = ctx,
@@ -119,7 +119,7 @@ static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
 
     auto nn = (token == "(") ?
       next_list(ctx, r) :
-      new (ctx->allocator()) lispy::node {
+      new (lispy::alloc()) lispy::node {
         .atom = token,
         .src = r.data(),
         .loc = static_cast<unsigned>(r.loc() - token.size()),
@@ -141,7 +141,7 @@ static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   } else if (token == ")") {
     r.err("unbalanced close parenthesis");
   } else {
-    return new (ctx->allocator()) lispy::node { 
+    return new (lispy::alloc()) lispy::node { 
       .atom = token,
       .src = r.data(),
       .loc = static_cast<unsigned>(r.loc() - token.size()),

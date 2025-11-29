@@ -9,6 +9,7 @@ using namespace lispy::experimental;
 
 struct cnode : node {};
 void run() {
+  arena<cnode> a {};
   basic_context<cnode> ctx {};
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     for (auto i = 0; i < as; i++) put(eval<cnode>(n->ctx, aa[i])->atom);

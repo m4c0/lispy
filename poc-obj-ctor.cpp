@@ -17,9 +17,10 @@ struct custom_node : public lispy::node {
 };
 
 int main() try {
+  arena<custom_node> a {};
   basic_context<custom_node> ctx {};
   ctx.fns["music"] = [](auto n, auto aa, auto as) -> const node * {
-    basic_context<custom_node> ctx { n->ctx->allocator };
+    basic_context<custom_node> ctx {};
     ctx.fns["title"]    = mem_attr<&custom_node::attr, &custom_node::title>;
     ctx.fns["author"]   = mem_attr<&custom_node::attr, &custom_node::author>;
     ctx.fns["rate"]     = mem_fn<&custom_node::attr, &custom_node::rate, to_i>;

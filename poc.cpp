@@ -38,9 +38,8 @@ static const node * sub(const node * n, const custom_node * a, const custom_node
 }
 
 void run() {
-  context ctx {
-    .allocator = lispy::allocator<custom_node>(),
-  };
+  arena<custom_node> a {};
+  context ctx {};
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::err(n, "add expects two coordinates");
 
@@ -75,7 +74,7 @@ int main() { run(); }
 int main() try {
   run();
 } catch (const parser_error & e) {
-  errfn("line %d col %d: %s", e.line, e.col, e.msg.begin());
+  errln("line ", e.line, " col ", e.col, " - ", e.msg);
   return 1;
 } catch (...) {
   errln("unknown error");

@@ -68,38 +68,47 @@ namespace lispy {
 
   using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
   struct context {
-    hai::fn<node *> allocator {};
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
     const context * parent {};
   };
 
-  export
-  template<traits::base_is<node> T = node>
-  class memory {
-    hai::array<T> memory { 10240 };
-    T * current = memory.begin();
+  using alloc_t = hai::fn<node *>;
+  export alloc_t & memory() {
+    static alloc_t i = [] -> node * {
+      using namespace jute::literals;
+      fail({ .msg = "Trying to use uninitialised lispy memory"_hs });
+    };
+    return i;
+  }
+  auto alloc() { return memory()(); }
 
-  public:
+  export
+  template<traits::base_is<node> T>
+  class arena {
+    hai::array<T> buffer { 10240 };
+    T * current = buffer.begin();
+    alloc_t prev_arena;
+
     node * alloc() {
       using namespace jute::literals;
-      if (current == memory.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
+      if (current == buffer.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
       return current++;
     }
+
+  public:
+    arena() : prev_arena { memory() } {
+      memory() = [this] { return alloc(); };
+    }
+    ~arena() {
+      memory() = prev_arena;
+    }
   };
-  export template<typename T=node> constexpr auto allocator() {
-    return [mem=memory<T>()] mutable -> node * {
-      return mem.alloc();
-    };
-  }
 
   export void each(jute::view src, lispy::context * ctx, hai::fn<void, lispy::context *, const lispy::node *> fn);
 
-  export template<traits::base_is<node> N> N * clone(context * ctx, const node * n) {
-    return new (ctx->allocator()) N { *n };
-  }
   export template<traits::base_is<node> N> N * clone(const node * n) {
-    return clone<N>(n->ctx, n);
+    return new (alloc()) N { *n };
   }
 
   export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context * ctx, const node * n) {
@@ -145,11 +154,6 @@ namespace lispy::experimental {
   export template<typename Node>
   class basic_context : public context {
   public:
-    basic_context() : basic_context { lispy::allocator<Node>() } {}
-    explicit basic_context(hai::fn<node *> allocator) : context {
-      .allocator = allocator,
-    } {}
-
     auto clone(const node * n) { return clone<Node>(this, n); }
     auto eval(const node * n) { return eval<Node>(this, n); }
     auto run(jute::view src) { return run<Node>(src, this); }
