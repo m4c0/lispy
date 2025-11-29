@@ -82,7 +82,8 @@ namespace lispy {
 
   public:
     node * alloc() {
-      if (current == memory.end()) fail({});
+      using namespace jute::literals;
+      if (current == memory.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
       return current++;
     }
   };
