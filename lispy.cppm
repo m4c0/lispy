@@ -83,12 +83,19 @@ namespace lispy {
   }
   auto alloc() { return memory()(); }
 
+  class memory_guard : no::no {
+    alloc_t m_prev_alloc;
+
+  public:
+    memory_guard(alloc_t t) : m_prev_alloc { t } {}
+    ~memory_guard() { memory() = m_prev_alloc; }
+  };
+
   export
   template<traits::base_is<node> T>
-  class temp_arena : no::no {
+  class arena : no::no {
     hai::array<T> m_buffer { 10240 };
     T * m_current = m_buffer.begin();
-    alloc_t m_prev_alloc = memory();
 
     node * alloc() {
       using namespace jute::literals;
@@ -97,12 +104,17 @@ namespace lispy {
     }
 
   public:
-    temp_arena() {
+    [[nodiscard]] auto use() {
+      alloc_t prev = memory();
       memory() = [this] { return this->alloc(); };
+      return memory_guard { prev };
     }
-    ~temp_arena() {
-      memory() = m_prev_alloc;
-    }
+  };
+
+  export
+  template<traits::base_is<node> T>
+  class temp_arena : arena<T> {
+    memory_guard g = arena<T>::use();
   };
 
   export void each(jute::view src, lispy::context * ctx, hai::fn<void, lispy::context *, const lispy::node *> fn);
