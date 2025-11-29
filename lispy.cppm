@@ -103,12 +103,20 @@ namespace lispy {
       return m_current++;
     }
 
+  protected:
+    arena() = default;
+
   public:
     [[nodiscard]] auto use() {
       alloc_t prev = memory();
       memory() = [this] { return this->alloc(); };
       return memory_guard { prev };
     }
+
+    // This class is meant for long-term storage. This minor uptr nuisance
+    // forces users to notice they should either use temp_arena or keep this
+    // reference around.
+    static auto make() { return hai::uptr { new arena() }; }
   };
 
   export
