@@ -115,7 +115,7 @@ static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
   while (r) {
     auto token = next_token(r);
     if (token == ")") return res;
-    if (token == "") break;
+    if (token == "" && !r) break; // Diff. empty token from EOF
 
     auto nn = (token == "(") ?
       next_list(ctx, r) :
