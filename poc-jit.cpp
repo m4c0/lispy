@@ -56,7 +56,7 @@ void run() {
     return nn;
   };
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
-    if (as != 2) lispy::err(n, "add expects two coordinates");
+    if (as != 2) lispy::erred(n, "add expects two coordinates");
 
     auto a = eval<custom_node>(n->ctx, aa[0]);
     auto b = eval<custom_node>(n->ctx, aa[1]);
@@ -71,7 +71,7 @@ void run() {
     return nn;
   };
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
-    if (as != 1) lispy::err(n, "pr expects a single argument");
+    if (as != 1) lispy::erred(n, "pr expects a single argument");
 
     auto a = eval<custom_node>(n->ctx, aa[0]);
     auto ai = a->fn ? a->fn : sfn_t{new fn_t{[i=to_i(a)] { return i; }}};

@@ -6,7 +6,7 @@ import rng;
 
 using namespace jute::literals;
 
-[[noreturn]] static void err(jute::view src, jute::heap msg, unsigned loc) {
+[[noreturn]] static void erred(jute::view src, jute::heap msg, unsigned loc) {
   unsigned l = 1;
   unsigned last = 0;
   for (auto i = 0; i < loc; i++) {
@@ -43,8 +43,8 @@ public:
     return (*m_data)[m_pos++];
   }
 
-  [[noreturn]] void err(jute::heap msg) const {
-    ::err(m_data, msg, m_pos);
+  [[noreturn]] void erred(jute::heap msg) const {
+    ::erred(m_data, msg, m_pos);
   }
 
   jute::view token(const char * start) const {
@@ -52,9 +52,9 @@ public:
   }
 };
  
-void lispy::err(jute::heap msg) { fail({ msg, 1, 1 }); }
-void lispy::err(const lispy::node * n, jute::heap msg) { ::err(n->src, msg, n->loc); }
-void lispy::err(const lispy::node * n, jute::heap msg, unsigned rloc) { ::err(n->src, msg, n->loc + rloc); }
+void lispy::erred(jute::heap msg) { fail({ msg, 1, 1 }); }
+void lispy::erred(const lispy::node * n, jute::heap msg) { ::erred(n->src, msg, n->loc); }
+void lispy::erred(const lispy::node * n, jute::heap msg, unsigned rloc) { ::erred(n->src, msg, n->loc + rloc); }
 
 hai::cstr lispy::to_file_err(jute::view filename, const lispy::parser_error & e) {
   char msg[128] {};
@@ -75,7 +75,7 @@ static jute::view next_atom_token(const char * start, lispy::reader & r) {
 }
 static jute::view next_string_token(const char * start, lispy::reader & r) {
   while (r && r.peek() != '"') r.take();
-  if (!r.peek()) r.err("string not closed");
+  if (!r.peek()) r.erred("string not closed");
   auto res = r.token(start + 1);
   r.take(); // consume '"'
   return res;
@@ -97,7 +97,7 @@ static jute::view next_token(lispy::reader & r) {
       case ';': comment(r); break;
       default: {
         if (is_atom_char(c)) return next_atom_token(start, r);
-        r.err("character not allowed here");
+        r.erred("character not allowed here");
         break;
       }
     }
@@ -128,7 +128,7 @@ static lispy::node * next_list(lispy::context * ctx, lispy::reader & r) {
     *n = nn;
     n = &(nn->next);
   }
-  err(res, "unbalanced open parenthesis");
+  erred(res, "unbalanced open parenthesis");
 }
 static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   if (!r) return {};
@@ -139,7 +139,7 @@ static lispy::node * next_node(lispy::context * ctx, lispy::reader & r) {
   } else if (token == "(") {
     return next_list(ctx, r);
   } else if (token == ")") {
-    r.err("unbalanced close parenthesis");
+    r.erred("unbalanced close parenthesis");
   } else {
     return new (lispy::alloc()) lispy::node { 
       .atom = token,
@@ -170,38 +170,38 @@ static inline const lispy::node * find_def(const lispy::context * ctx, jute::vie
 
 template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(lispy::context * ctx, const lispy::node * n) {
   if (!n->list) return n;
-  if (!is_atom(n->list)) err(n->list, "expecting an atom as a function name");
+  if (!is_atom(n->list)) erred(n->list, "expecting an atom as a function name");
 
   auto fn = n->list->atom;
 
   if (fn == "def") {
-    if (ls(n) != 3) err(n, "def requires a name and a value");
+    if (ls(n) != 3) erred(n, "def requires a name and a value");
 
     auto args = n->list->next;
-    if (!is_atom(args)) err(args, "def name must be an atom");
+    if (!is_atom(args)) erred(args, "def name must be an atom");
     ctx->defs[args->atom] = args->next;
     return args->next;
   }
 
   const lispy::node * aa[128] {};
-  if (ls(n) >= 127) err(n, "too many parameters");
+  if (ls(n) >= 127) erred(n, "too many parameters");
   auto ap = aa;
   for (auto nn = n->list->next; nn; nn = nn->next) *ap++ = nn;
 
   if (auto f = find_fn(ctx, fn)) {
     return f(n, aa, ap - aa);
   } else if (fn == "do") {
-    if (ap == aa) err(n, "'do' requires at least a parameter");
+    if (ap == aa) erred(n, "'do' requires at least a parameter");
     const node * res;
     for (auto i = 0; i < ap - aa; i++) res = eval<node>(ctx, aa[i]);
     return res;
   } else if (fn == "random") {
-    if (ap == aa) err(n, "random requires at least a parameter");
+    if (ap == aa) erred(n, "random requires at least a parameter");
     return eval<node>(ctx, aa[rng::rand(ap - aa)]);
   } else if (auto d = find_def(ctx, fn)) {
     return eval<node>(ctx, d);
   } else {
-    err(n, ("invalid function name: "_s + fn).heap());
+    erred(n, ("invalid function name: "_s + fn).heap());
   }
 }
 

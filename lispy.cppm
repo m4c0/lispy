@@ -28,41 +28,41 @@ namespace lispy {
     void * operator new(traits::size_t n, void * p) { return p; }
   };
 
-  export [[noreturn]] void err(jute::heap msg);
-  export [[noreturn]] void err(const lispy::node * n, jute::heap msg);
-  export [[noreturn]] void err(const lispy::node * n, jute::heap msg, unsigned rloc);
+  export [[noreturn]] void erred(jute::heap msg);
+  export [[noreturn]] void erred(const lispy::node * n, jute::heap msg);
+  export [[noreturn]] void erred(const lispy::node * n, jute::heap msg, unsigned rloc);
 
   export hai::cstr to_file_err(jute::view filename, const parser_error & e);
 
   export constexpr bool is_atom(const node * n) { return n->atom.size(); }
 
   export float to_f(const node * n) {
-    if (!is_atom(n)) err(n, "expecting number");
+    if (!is_atom(n)) erred(n, "expecting number");
     auto [v, ok] = jute::to_f(n->atom);
-    if (!ok) err(n, "invalid number");
+    if (!ok) erred(n, "invalid number");
     return v;
   }
   export int to_i(const node * n) {
-    if (!is_atom(n)) err(n, "expecting number");
+    if (!is_atom(n)) erred(n, "expecting number");
     auto [v, ok] = jute::to_u32(n->atom);
-    if (!ok) err(n, "invalid number");
+    if (!ok) erred(n, "invalid number");
     return v;
   }
   export unsigned to_u32(const node * n) {
-    if (!is_atom(n)) err(n, "expecting non-negative number");
+    if (!is_atom(n)) erred(n, "expecting non-negative number");
     auto [v, ok] = jute::to_u32(n->atom);
-    if (!ok) err(n, "invalid non-negative number");
+    if (!ok) erred(n, "invalid non-negative number");
     return v;
   }
 
 #ifdef LECO_TARGET_WASM
-  export [[noreturn]] void fail(parser_error err) {
-    vaselin::console_error(err.msg.begin(), err.msg.size());
+  export [[noreturn]] void fail(parser_error erred) {
+    vaselin::console_error(erred.msg.begin(), erred.msg.size());
     vaselin::raise_error();
   }
 #else
-  export [[noreturn]] void fail(parser_error err) {
-    throw err;
+  export [[noreturn]] void fail(parser_error erred) {
+    throw erred;
   }
 #endif
 
@@ -163,7 +163,7 @@ namespace lispy::experimental {
 
   template<typename Node, typename... Args>
   const node * wrap_fn(const node * (*fn)(const node *, Args...), const node * n, const node * const * aa, unsigned as) {
-    if (as != sizeof...(Args)) err(n, "invalid number of parameters");
+    if (as != sizeof...(Args)) erred(n, "invalid number of parameters");
     return call<Node>(fn, n, aa, make_seq<Args...>());
   }
   export template<typename Node, auto Fn>
@@ -185,7 +185,7 @@ namespace lispy::experimental {
   }
   export template<auto Attr, auto Fn>
   const node * mem_set(const node * n, const node * const * aa, unsigned as) {
-    if (as != 0) lispy::err(n, "Expecting no parameter");
+    if (as != 0) erred(n, "Expecting no parameter");
 
     auto nn = clony(n, Attr);
     nn->*Attr = Fn;
@@ -193,7 +193,7 @@ namespace lispy::experimental {
   }
   export template<auto Attr, auto A>
   const node * mem_flag(const node * n, const node * const * aa, unsigned as) {
-    if (as != 0) lispy::err(n, "Expecting no parameter");
+    if (as != 0) erred(n, "Expecting no parameter");
 
     auto nn = clony(n, Attr);
     nn->*Attr = [](auto * self, auto * n) { self->*A = true; };
@@ -201,7 +201,7 @@ namespace lispy::experimental {
   }
   export template<auto Attr, auto A, auto ConvFn>
   const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
-    if (as != 1) lispy::err(n, "Expecting a single parameter");
+    if (as != 1) erred(n, "Expecting a single parameter");
 
     auto nn = clony(aa[0], Attr);
     nn->*Attr = [](auto * self, auto * n) { self->*A = ConvFn(n); };
@@ -209,7 +209,7 @@ namespace lispy::experimental {
   }
   export template<auto Attr, auto A>
   const node * mem_attr(const node * n, const node * const * aa, unsigned as) {
-    if (as != 1) lispy::err(n, "Expecting a single parameter");
+    if (as != 1) erred(n, "Expecting a single parameter");
 
     auto nn = clony(aa[0], Attr);
     nn->*Attr = [](auto * self, auto * n) { self->*A = n->atom; };

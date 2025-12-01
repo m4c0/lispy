@@ -41,7 +41,7 @@ void run() {
   temp_arena<custom_node> a {};
   context ctx {};
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
-    if (as != 2) lispy::err(n, "add expects two coordinates");
+    if (as != 2) lispy::erred(n, "add expects two coordinates");
 
     auto a = eval<custom_node>(n->ctx, aa[0]);
     auto b = eval<custom_node>(n->ctx, aa[1]);
