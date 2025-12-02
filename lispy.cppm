@@ -64,7 +64,7 @@ namespace lispy {
   }
 #endif
 
-  struct frame;
+  export struct frame;
   frame * & context() {
     static thread_local frame * i {};
     return i;
