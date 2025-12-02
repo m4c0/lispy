@@ -4,6 +4,7 @@ import hai;
 import hashley;
 import jute;
 import no;
+import sv;
 
 #ifdef LECO_TARGET_WASM
 import vaselin;
@@ -64,8 +65,8 @@ namespace lispy {
   }
 #endif
 
-  export struct frame;
-  frame * & context() {
+  export class frame;
+  export frame * & context() {
     static thread_local frame * i {};
     return i;
   }
@@ -79,19 +80,40 @@ namespace lispy {
   };
 
   using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
-  struct frame {
+  class frame {
+    frame * parent = nullptr;
+
+  protected:
+    frame() = default;
+
+  public:
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
-    frame * parent = nullptr;
+
+    [[nodiscard]] const node * def(sv name) {
+      if (defs.has(name)) return defs[name];
+      else if (parent) return parent->def(name);
+      else return nullptr;
+    }
+    [[nodiscard]] fn_t fn(sv name) {
+      if (fns.has(name)) return fns[name];
+      else if (parent) return parent->fn(name);
+      else return nullptr;
+    }
 
     [[nodiscard]] auto use() {
       parent = context();
       context() = this;
       return frame_guard { parent };
     }
+ 
+    // This class is meant for long-term storage. This minor uptr nuisance
+    // forces users to notice they should either use temp_arena or keep this
+    // reference around.
+    static auto make() { return hai::uptr { new frame() }; }
   };
 
-  export struct temp_frame : frame {
+  export class temp_frame : public frame {
     frame_guard g = frame::use();
   };
 
