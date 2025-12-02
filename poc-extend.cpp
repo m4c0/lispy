@@ -10,20 +10,20 @@ using namespace lispy::experimental;
 struct cnode : node {};
 void run() {
   temp_arena<cnode> a {};
-  basic_context<cnode> ctx {};
+  context ctx {};
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     for (auto i = 0; i < as; i++) put(eval<cnode>(n->ctx, aa[i])->atom);
     putln();
     return n;
   };
-  ctx.run("(def X (random a b c)) (def Y (X))");
+  run<cnode>("(def X (random a b c)) (def Y (X))", &ctx);
 
-  basic_context<cnode> ctx2 {};
+  context ctx2 {};
   ctx2.parent = &ctx;
   ctx2.fns["echo"] = [](auto n, auto aa, auto as) -> const node * {
     return eval<cnode>(n->ctx, aa[0]);
   };
-  ctx2.run("(def Z (Y)) (pr (echo (X)) (Y) (Z))");
+  run<cnode>("(def Z (Y)) (pr (echo (X)) (Y) (Z))", &ctx2);
 }
 
 int main() try {

@@ -171,14 +171,6 @@ namespace lispy::experimental {
     return wrap_fn<Node>(Fn, n, aa, as);
   }
 
-  export template<typename Node>
-  class basic_context : public context {
-  public:
-    auto clone(const node * n) { return clone<Node>(this, n); }
-    auto eval(const node * n) { return eval<Node>(this, n); }
-    auto run(jute::view src) { return run<Node>(src, this); }
-  };
-
   template<typename T>
   auto clony(const node * n, auto (T::*A)) {
     return clone<T>(n);
