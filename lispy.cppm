@@ -16,14 +16,12 @@ namespace lispy {
     unsigned col;
   };
 
-  export struct context;
   export struct node : no::move {
     jute::view atom {};
     const node * list {};
     const node * next {};
     jute::heap src {};
     unsigned loc {};
-    context * ctx {};
 
     void * operator new(traits::size_t n, void * p) { return p; }
   };
@@ -66,11 +64,35 @@ namespace lispy {
   }
 #endif
 
+  struct frame;
+  frame * & context() {
+    static thread_local frame * i {};
+    return i;
+  }
+
+  class frame_guard : no::no {
+    frame * m_prev_frame;
+
+  public:
+    frame_guard(frame * t) : m_prev_frame { t } {}
+    ~frame_guard() { context() = m_prev_frame; }
+  };
+
   using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
-  struct context {
+  struct frame {
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
-    const context * parent {};
+    frame * parent = nullptr;
+
+    [[nodiscard]] auto use() {
+      parent = context();
+      context() = this;
+      return frame_guard { parent };
+    }
+  };
+
+  export struct temp_frame : frame {
+    frame_guard g = frame::use();
   };
 
   using alloc_t = hai::fn<node *>;
@@ -125,21 +147,21 @@ namespace lispy {
     memory_guard g = arena<T>::use();
   };
 
-  export void each(jute::view src, lispy::context * ctx, hai::fn<void, lispy::context *, const lispy::node *> fn);
+  export void each(jute::view src, hai::fn<void, const lispy::node *> fn);
 
   export template<traits::base_is<node> N> N * clone(const node * n) {
     return new (alloc()) N { *n };
   }
 
-  export template<traits::base_is<node> N> [[nodiscard]] const N * eval(context * ctx, const node * n) {
-    return static_cast<const N *>(eval<node>(ctx, n));
+  export template<traits::base_is<node> N> [[nodiscard]] const N * eval(const node * n) {
+    return static_cast<const N *>(eval<node>(n));
   }
-  export template<> [[nodiscard]] const node * eval<node>(context * ctx, const node * n);
+  export template<> [[nodiscard]] const node * eval<node>(const node * n);
 
-  export template<traits::base_is<node> N> const N * run(jute::view source, context * ctx) {
-    return static_cast<const N *>(run<node>(source, ctx));
+  export template<traits::base_is<node> N> const N * run(jute::view source) {
+    return static_cast<const N *>(run<node>(source));
   }
-  export template<> const node * run<node>(jute::view source, context * ctx);
+  export template<> const node * run<node>(jute::view source);
 }
 
 namespace lispy::experimental {
@@ -157,7 +179,7 @@ namespace lispy::experimental {
 
   template<typename Node, unsigned... I>
   const node * call(auto fn, const node * n, const node * const * aa, seq<I...>) {
-    const Node * ee[] { eval<Node>(n->ctx, aa[I])... };
+    const Node * ee[] { eval<Node>(aa[I])... };
     return fn(n, ee[I]...);
   }
 
@@ -209,10 +231,10 @@ namespace lispy::experimental {
   }
 
   export template<typename T>
-  T * fill_clone(context * ctx, const node * n, auto aa, auto as) {
+  T * fill_clone(const node * n, auto aa, auto as) {
     auto nn = clone<T>(n);
     for (auto i = 0; i < as; i++) {
-      auto nat = eval<T>(ctx, aa[i]);
+      auto nat = eval<T>(aa[i]);
       if (nat->attr) (nat->attr)(nn, nat);
     }
     return nn;

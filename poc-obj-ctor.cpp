@@ -18,9 +18,9 @@ struct custom_node : public lispy::node {
 
 int main() try {
   temp_arena<custom_node> a {};
-  context ctx {};
+  temp_frame ctx {};
   ctx.fns["music"] = [](auto n, auto aa, auto as) -> const node * {
-    context ctx {};
+    temp_frame ctx {};
     ctx.fns["title"]    = mem_attr<&custom_node::attr, &custom_node::title>;
     ctx.fns["author"]   = mem_attr<&custom_node::attr, &custom_node::author>;
     ctx.fns["rate"]     = mem_fn<&custom_node::attr, &custom_node::rate, to_i>;
@@ -28,7 +28,7 @@ int main() try {
     ctx.fns["checked"]  = mem_set<&custom_node::attr, [](auto * self, auto * n) {
       self->checked = true;
     }>;
-    return fill_clone<custom_node>(&ctx, n, aa, as);
+    return fill_clone<custom_node>(n, aa, as);
   };
   auto res = run<custom_node>(R"(
     (music
@@ -37,7 +37,7 @@ int main() try {
       (rate 1)
       (title Thriller)
       (author "Mike Jackson"))
-  )", &ctx);
+  )");
   if (res->title  != "Thriller")  err("missing title");
   if (res->author != "Mike Jackson") err("missing author");
   if (!res->approved) err("not approved");

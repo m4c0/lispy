@@ -9,10 +9,10 @@ using namespace lispy;
 
 using jit_t = hai::fn<void>;
 jit_t compile(jute::view source) {
-  context ctx {};
+  temp_frame ctx {};
 
   hai::chain<jit_t> subs { 16 };
-  lispy::each(source, &ctx, [](auto, auto) {
+  lispy::each(source, [](auto) {
     putln("o");
   });
 
@@ -38,11 +38,11 @@ struct custom_node : node {
 
 void run() {
   lispy::temp_arena<custom_node> mem {};
-  lispy::context ctx {};
+  lispy::temp_frame ctx {};
   ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
     hai::array<sfn_t> fns { as };
     for (auto i = 0; i < as; i++) {
-      fns[i] = eval<custom_node>(n->ctx, aa[i])->fn;
+      fns[i] = eval<custom_node>(aa[i])->fn;
     }
 
     auto * nn = clone<custom_node>(n);
@@ -58,8 +58,8 @@ void run() {
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::erred(n, "add expects two coordinates");
 
-    auto a = eval<custom_node>(n->ctx, aa[0]);
-    auto b = eval<custom_node>(n->ctx, aa[1]);
+    auto a = eval<custom_node>(aa[0]);
+    auto b = eval<custom_node>(aa[1]);
 
     auto ai = a->fn ? a->fn : sfn_t{new fn_t{[i=to_i(a)] { return i; }}};
     auto bi = b->fn ? b->fn : sfn_t{new fn_t{[i=to_i(b)] { return i; }}};
@@ -73,7 +73,7 @@ void run() {
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 1) lispy::erred(n, "pr expects a single argument");
 
-    auto a = eval<custom_node>(n->ctx, aa[0]);
+    auto a = eval<custom_node>(aa[0]);
     auto ai = a->fn ? a->fn : sfn_t{new fn_t{[i=to_i(a)] { return i; }}};
 
     auto * nn = clone<custom_node>(n);

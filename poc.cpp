@@ -39,12 +39,12 @@ static const node * sub(const node * n, const custom_node * a, const custom_node
 
 void run() {
   temp_arena<custom_node> a {};
-  context ctx {};
+  temp_frame ctx {};
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 2) lispy::erred(n, "add expects two coordinates");
 
-    auto a = eval<custom_node>(n->ctx, aa[0]);
-    auto b = eval<custom_node>(n->ctx, aa[1]);
+    auto a = eval<custom_node>(aa[0]);
+    auto b = eval<custom_node>(aa[1]);
 
     auto ai = a->is_val ? a->val : to_i(a);
     auto bi = b->is_val ? b->val : to_i(b);
@@ -58,14 +58,14 @@ void run() {
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     auto res = static_cast<const custom_node *>(n);
     for (auto i = 0; i < as; i++) {
-      res = eval<custom_node>(n->ctx, aa[i]);
+      res = eval<custom_node>(aa[i]);
       put(res->is_val ? res->val : to_i(res), " ");
     }
     putln();
     return res;
   };
 
-  run<node>(src, &ctx);
+  run<node>(src);
 }
 
 #ifdef LECO_TARGET_WASM
