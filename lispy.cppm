@@ -89,6 +89,7 @@ namespace lispy {
   public:
     hashley::fin<const node *> defs { 127 };
     hashley::fin<fn_t> fns { 127 };
+    hashley::fin<void *> ptrs { 127 };
 
     [[nodiscard]] const node * def(sv name) {
       if (defs.has(name)) return defs[name];
@@ -98,6 +99,11 @@ namespace lispy {
     [[nodiscard]] fn_t fn(sv name) {
       if (fns.has(name)) return fns[name];
       else if (parent) return parent->fn(name);
+      else return nullptr;
+    }
+    [[nodiscard]] void * ptr(sv name) {
+      if (ptrs.has(name)) return ptrs[name];
+      else if (parent) return parent->ptr(name);
       else return nullptr;
     }
 
