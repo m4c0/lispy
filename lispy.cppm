@@ -225,6 +225,10 @@ namespace lispy::experimental {
   auto clony(const node * n, auto (T::*A)) {
     return clone<T>(n);
   }
+  template<typename T>
+  auto clone_eval(const node * n, auto (T::*A)) {
+    return clone<T>(eval<T>(n));
+  }
   export template<auto Attr, auto Fn>
   const node * mem_set(const node * n, const node * const * aa, unsigned as) {
     if (as != 0) erred(n, "Expecting no parameter");
@@ -245,7 +249,7 @@ namespace lispy::experimental {
   const node * mem_fn(const node * n, const node * const * aa, unsigned as) {
     if (as != 1) erred(n, "Expecting a single parameter");
 
-    auto nn = clony(aa[0], Attr);
+    auto nn = clone_eval(aa[0], Attr);
     nn->*Attr = [](auto * self, auto * n) { self->*A = ConvFn(n); };
     return nn;
   }
@@ -253,7 +257,7 @@ namespace lispy::experimental {
   const node * mem_attr(const node * n, const node * const * aa, unsigned as) {
     if (as != 1) erred(n, "Expecting a single parameter");
 
-    auto nn = clony(aa[0], Attr);
+    auto nn = clone_eval(aa[0], Attr);
     nn->*Attr = [](auto * self, auto * n) { self->*A = n->atom; };
     return nn;
   }
