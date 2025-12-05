@@ -6,7 +6,7 @@ import rng;
 
 using namespace jute::literals;
 
-[[noreturn]] static void erred(jute::view src, jute::heap msg, unsigned loc) {
+[[noreturn]] static void erred(jute::heap filename, jute::view src, jute::heap msg, unsigned loc) {
   unsigned l = 1;
   unsigned last = 0;
   for (auto i = 0; i < loc; i++) {
@@ -15,21 +15,28 @@ using namespace jute::literals;
       l++;
     }
   }
-  lispy::fail({ msg, l, loc - last });
+  lispy::fail({
+    .file = filename,
+    .msg  = msg,
+    .line = l,
+    .col  = loc - last,
+  });
 }
 
 namespace lispy { class reader; }
 class lispy::reader : no::no {
+  jute::heap m_filename;
   jute::heap m_data;
   unsigned m_pos {};
 
 public:
-  explicit reader(jute::heap data) : m_data { data } {}
+  explicit reader(jute::heap filename, jute::heap data) : m_filename { filename }, m_data { data } {}
 
   explicit operator bool() const {
     return m_pos < m_data.size();
   }
 
+  jute::heap file() const { return m_filename; }
   jute::heap data() const { return m_data; }
   unsigned loc() const { return m_pos; }
   const char * mark() const { return m_data.begin() + m_pos; }
@@ -44,7 +51,7 @@ public:
   }
 
   [[noreturn]] void erred(jute::heap msg) const {
-    ::erred(m_data, msg, m_pos);
+    ::erred(m_filename, m_data, msg, m_pos);
   }
 
   jute::view token(const char * start) const {
@@ -52,14 +59,14 @@ public:
   }
 };
  
-void lispy::erred(jute::heap msg) { fail({ msg, 1, 1 }); }
-void lispy::erred(const lispy::node * n, jute::heap msg) { ::erred(n->src, msg, n->loc); }
-void lispy::erred(const lispy::node * n, jute::heap msg, unsigned rloc) { ::erred(n->src, msg, n->loc + rloc); }
+void lispy::erred(jute::heap msg) { fail({ "no-file", msg, 1, 1 }); }
+void lispy::erred(const lispy::node * n, jute::heap msg) { ::erred(n->file, n->src, msg, n->loc); }
+void lispy::erred(const lispy::node * n, jute::heap msg, unsigned rloc) { ::erred(n->file, n->src, msg, n->loc + rloc); }
 
-hai::cstr lispy::to_file_err(jute::view filename, const lispy::parser_error & e) {
+hai::cstr lispy::to_file_err(const lispy::parser_error & e) {
   char msg[128] {};
   auto len = snprintf(msg, sizeof(msg), "%.*s:%d:%d: %.*s",
-      static_cast<unsigned>(filename.size()), filename.begin(),
+      static_cast<unsigned>(e.file.size()), e.file.begin(),
       e.line, e.col,
       static_cast<unsigned>(e.msg.size()), e.msg.begin());
   if (len > 0) return jute::view { msg, static_cast<unsigned>(len) }.cstr();
@@ -108,6 +115,7 @@ static jute::view next_token(lispy::reader & r) {
 static lispy::node * next_list(lispy::reader & r) {
   auto * res = new (lispy::alloc()) lispy::node {
     .src = r.data(),
+    .file = r.file(),
     .loc = r.loc(),
   };
   auto * n = &res->list;
@@ -121,6 +129,7 @@ static lispy::node * next_list(lispy::reader & r) {
       new (lispy::alloc()) lispy::node {
         .atom = token,
         .src = r.data(),
+        .file = r.file(),
         .loc = static_cast<unsigned>(r.loc() - token.size()),
       };
     *n = nn;
@@ -142,6 +151,7 @@ static lispy::node * next_node(lispy::reader & r) {
     return new (lispy::alloc()) lispy::node { 
       .atom = token,
       .src = r.data(),
+      .file = r.file(),
       .loc = static_cast<unsigned>(r.loc() - token.size()),
     };
   }
@@ -191,17 +201,17 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(const lisp
   }
 }
 
-void lispy::each(jute::view src, hai::fn<void, const lispy::node *> fn) {
-  reader r { jute::heap { src } };
+void lispy::each(jute::view filename, jute::view src, hai::fn<void, const lispy::node *> fn) {
+  reader r { jute::heap { filename }, jute::heap { src } };
   while (r) {
     const node * nn = next_node(r);
     if (nn) fn(nn);
   }
 }
 
-template<> const lispy::node * lispy::run<lispy::node>(jute::view source) {
+template<> const lispy::node * lispy::run<lispy::node>(jute::view filename, jute::view source) {
   const node * n = nullptr;
-  each(source, [&](auto nn) {
+  each(filename, source, [&](auto nn) {
     n = eval<node>(nn);
   });
   return n;

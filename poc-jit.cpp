@@ -12,7 +12,7 @@ jit_t compile(jute::view source) {
   temp_frame ctx {};
 
   hai::chain<jit_t> subs { 16 };
-  lispy::each(source, [](auto) {
+  lispy::each("file", source, [](auto) {
     putln("o");
   });
 

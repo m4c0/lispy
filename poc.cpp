@@ -65,7 +65,7 @@ void run() {
     return res;
   };
 
-  run<node>(src);
+  run<node>("no-file", src);
 }
 
 #ifdef LECO_TARGET_WASM

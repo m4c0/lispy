@@ -16,13 +16,13 @@ void run() {
     putln();
     return n;
   };
-  run<cnode>("(def X (random a b c)) (def Y (X))");
+  run<cnode>("file-1", "(def X (random a b c)) (def Y (X))");
 
   temp_frame ctx2 {};
   ctx2.fns["echo"] = [](auto n, auto aa, auto as) -> const node * {
     return eval<cnode>(aa[0]);
   };
-  run<cnode>("(def Z (Y)) (pr (echo (X)) (Y) (Z))");
+  run<cnode>("file-2", "(def Z (Y)) (pr (echo (X)) (Y) (Z))");
 }
 
 int main() try {

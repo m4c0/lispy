@@ -30,7 +30,7 @@ int main() try {
     }>;
     return fill_clone<custom_node>(n, aa, as);
   };
-  auto res = run<custom_node>(R"(
+  auto res = run<custom_node>("they-dont-care-about-us-file", R"(
     (music
       (approved)
       (checked)

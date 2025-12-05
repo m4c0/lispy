@@ -12,6 +12,7 @@ import vaselin;
 
 namespace lispy {
   export struct parser_error {
+    jute::heap file;
     jute::heap msg;
     unsigned line;
     unsigned col;
@@ -22,6 +23,7 @@ namespace lispy {
     const node * list {};
     const node * next {};
     jute::heap src {};
+    jute::heap file {};
     unsigned loc {};
 
     void * operator new(traits::size_t n, void * p) { return p; }
@@ -31,7 +33,7 @@ namespace lispy {
   export [[noreturn]] void erred(const lispy::node * n, jute::heap msg);
   export [[noreturn]] void erred(const lispy::node * n, jute::heap msg, unsigned rloc);
 
-  export hai::cstr to_file_err(jute::view filename, const parser_error & e);
+  export hai::cstr to_file_err(const parser_error & e);
 
   export constexpr bool is_atom(const node * n) { return n->atom.size(); }
 
@@ -175,7 +177,7 @@ namespace lispy {
     memory_guard g = arena<T>::use();
   };
 
-  export void each(jute::view src, hai::fn<void, const lispy::node *> fn);
+  export void each(jute::view filename, jute::view src, hai::fn<void, const lispy::node *> fn);
 
   export template<traits::base_is<node> N> N * clone(const node * n) {
     return new (alloc()) N { *n };
@@ -186,10 +188,10 @@ namespace lispy {
   }
   export template<> [[nodiscard]] const node * eval<node>(const node * n);
 
-  export template<traits::base_is<node> N> const N * run(jute::view source) {
-    return static_cast<const N *>(run<node>(source));
+  export template<traits::base_is<node> N> const N * run(jute::view filename, jute::view source) {
+    return static_cast<const N *>(run<node>(filename, source));
   }
-  export template<> const node * run<node>(jute::view source);
+  export template<> const node * run<node>(jute::view filename, jute::view source);
 }
 
 namespace lispy::experimental {
