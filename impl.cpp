@@ -175,7 +175,7 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(const lisp
     auto args = n->list->next;
     if (!is_atom(args)) erred(args, "def name must be an atom");
     if (!context()) erred(n, "missing lispy frame");
-    context()->defs[args->atom] = args->next;
+    context()->def(args->atom, args->next);
     return args->next;
   }
 

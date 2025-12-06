@@ -67,24 +67,8 @@ namespace lispy {
   }
 #endif
 
-  export class frame;
-  export frame * & context() {
-    static thread_local frame * i {};
-    return i;
-  }
-
-  class frame_guard : no::no {
-    frame * m_prev_frame;
-
-  public:
-    frame_guard(frame * t) : m_prev_frame { t } {}
-    ~frame_guard() { context() = m_prev_frame; }
-  };
-
   using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
-  class frame {
-    frame * parent = nullptr;
-
+  export class frame {
   protected:
     frame() = default;
 
@@ -93,36 +77,54 @@ namespace lispy {
     hashley::fin<fn_t> fns { 127 };
     hashley::fin<void *> ptrs { 127 };
 
-    [[nodiscard]] const node * def(sv name) {
-      if (defs.has(name)) return defs[name];
-      else if (parent) return parent->def(name);
-      else return nullptr;
-    }
-    [[nodiscard]] fn_t fn(sv name) {
-      if (fns.has(name)) return fns[name];
-      else if (parent) return parent->fn(name);
-      else return nullptr;
-    }
-    [[nodiscard]] void * ptr(sv name) {
-      if (ptrs.has(name)) return ptrs[name];
-      else if (parent) return parent->ptr(name);
-      else return nullptr;
-    }
-
-    [[nodiscard]] auto use() {
-      parent = context();
-      context() = this;
-      return frame_guard { parent };
-    }
- 
     // This class is meant for long-term storage. This minor uptr nuisance
     // forces users to notice they should either use temp_arena or keep this
     // reference around.
     static auto make() { return hai::uptr { new frame() }; }
   };
 
+  export class frame_guard;
+  export frame_guard * & context() {
+    static thread_local frame_guard * i {};
+    return i;
+  }
+  class frame_guard : no::no {
+    frame_guard * m_prev_frame;
+    frame * m_frame;
+
+  public:
+    frame_guard(frame * f) :
+      m_prev_frame { context() }
+    , m_frame { f }
+    {
+      context() = this;
+    }
+    frame_guard(hai::uptr<frame> & f) : frame_guard { &*f } {}
+    ~frame_guard() { context() = m_prev_frame; }
+
+    void def(sv name, const node * val) {
+      m_frame->defs[name] = val;
+    }
+
+    [[nodiscard]] const node * def(sv name) const {
+      if (m_frame->defs.has(name)) return m_frame->defs[name];
+      else if (m_prev_frame) return m_prev_frame->def(name);
+      else return nullptr;
+    }
+    [[nodiscard]] fn_t fn(sv name) const {
+      if (m_frame->fns.has(name)) return m_frame->fns[name];
+      else if (m_prev_frame) return m_prev_frame->fn(name);
+      else return nullptr;
+    }
+    [[nodiscard]] void * ptr(sv name) const {
+      if (m_frame->ptrs.has(name)) return m_frame->ptrs[name];
+      else if (m_prev_frame) return m_prev_frame->ptr(name);
+      else return nullptr;
+    }
+  };
+
   export class temp_frame : public frame {
-    frame_guard g = frame::use();
+    frame_guard g { this };
   };
 
   using alloc_t = hai::fn<node *>;
