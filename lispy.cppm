@@ -106,6 +106,12 @@ namespace lispy {
     void def(sv name, const node * val) {
       m_frame->defs[name] = val;
     }
+    void fn(sv name, fn_t val) {
+      m_frame->fns[name] = val;
+    }
+    void ptr(sv name, void * val) {
+      m_frame->ptrs[name] = val;
+    }
 
     [[nodiscard]] const node * def(sv name) const {
       if (m_frame->defs.has(name)) return m_frame->defs[name];
