@@ -88,6 +88,7 @@ namespace lispy {
     static thread_local frame_guard * i {};
     return i;
   }
+  // TODO: read-only flag
   class frame_guard : no::no {
     frame_guard * m_prev_frame;
     frame * m_frame;
