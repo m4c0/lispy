@@ -135,7 +135,7 @@ namespace lispy {
   };
 
   using alloc_t = hai::fn<node *>;
-  export alloc_t & memory() {
+  alloc_t & memory() {
     static thread_local alloc_t i = [] -> node * {
       using namespace jute::literals;
       fail({ .msg = "Trying to use uninitialised lispy memory"_hs });
