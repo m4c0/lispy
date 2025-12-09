@@ -174,10 +174,6 @@ namespace lispy {
       return memory_guard { prev };
     }
 
-    void reset() {
-      m_current = m_buffer.begin();
-    }
-
     // This class is meant for long-term storage. This minor uptr nuisance
     // forces users to notice they should either use temp_arena or keep this
     // reference around.
