@@ -134,9 +134,9 @@ namespace lispy {
     frame_guard g { this };
   };
 
-  using alloc_t = hai::fn<node *>;
+  using alloc_t = hai::fn<void *>;
   alloc_t & memory() {
-    static thread_local alloc_t i = [] -> node * {
+    static thread_local alloc_t i = [] -> void * {
       using namespace jute::literals;
       fail({ .msg = "Trying to use uninitialised lispy memory"_hs });
     };
@@ -152,15 +152,21 @@ namespace lispy {
     ~memory_guard() { memory() = m_prev_alloc; }
   };
 
+  // Uses uninitialised memory and only deletes pointers actually allocated
   export
   template<traits::base_is<node> T>
   class arena : no::no {
-    hai::array<T> m_buffer { 10240 };
-    T * m_current = m_buffer.begin();
+    struct entry {
+      alignas(T) unsigned char buf[sizeof(T)];
+    };
+    static constexpr const auto buffer_size = 10240;
+    static constexpr const auto entry_size = sizeof(entry);
+    entry * m_buffer = ::new entry[buffer_size];
+    entry * m_current = m_buffer;
 
-    node * alloc() {
+    void * alloc() {
       using namespace jute::literals;
-      if (m_current == m_buffer.end()) fail({ .msg = "Lispy memory arena exhausted"_hs });
+      if (m_current == m_buffer + buffer_size) fail({ .msg = "Lispy memory arena exhausted"_hs });
       return m_current++;
     }
 
@@ -168,6 +174,13 @@ namespace lispy {
     arena() = default;
 
   public:
+    ~arena() {
+      for (auto p = m_buffer; p != m_current; p++) {
+        reinterpret_cast<T *>(p)->~T();
+      }
+      delete[] m_buffer;
+    }
+
     [[nodiscard]] auto use() {
       alloc_t prev = memory();
       memory() = [this] { return this->alloc(); };
