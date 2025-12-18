@@ -157,7 +157,7 @@ namespace lispy {
   template<traits::base_is<node> T>
   class arena : no::no {
     struct entry {
-      alignas(T) unsigned char buf[sizeof(T)];
+      alignas(T) unsigned char buf[sizeof(T)] {};
     };
     static constexpr const auto buffer_size = 10240;
     static constexpr const auto entry_size = sizeof(entry);
