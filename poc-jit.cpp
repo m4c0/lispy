@@ -31,28 +31,27 @@ static constexpr jute::view src = R"(
 )";
 
 using fn_t = hai::fn<int>;
-using sfn_t = hai::sptr<fn_t>;
 struct custom_node : node {
-  sfn_t fn {};
+  fn_t fn {};
 };
 
 void run() {
   lispy::temp_arena<custom_node> mem {};
   lispy::temp_frame ctx {};
   ctx.fns["do"] = [](auto n, auto aa, auto as) -> const node * {
-    hai::array<sfn_t> fns { as };
+    hai::array<fn_t> fns { as };
     for (auto i = 0; i < as; i++) {
       fns[i] = eval<custom_node>(aa[i])->fn;
     }
 
     auto * nn = clone<custom_node>(n);
-    nn->fn = sfn_t{new fn_t{[fns=traits::move(fns)] mutable {
+    nn->fn = [fns=traits::move(fns)] mutable {
       auto res = 0;
       for (auto fn : fns) {
-        res = (*fn)();
+        res = fn();
       }
       return res;
-    }}};
+    };
     return nn;
   };
   ctx.fns["add"] = [](auto n, auto aa, auto as) -> const node * {
@@ -61,27 +60,27 @@ void run() {
     auto a = eval<custom_node>(aa[0]);
     auto b = eval<custom_node>(aa[1]);
 
-    auto ai = a->fn ? a->fn : sfn_t{new fn_t{[i=to_i(a)] { return i; }}};
-    auto bi = b->fn ? b->fn : sfn_t{new fn_t{[i=to_i(b)] { return i; }}};
+    auto ai = a->fn ? a->fn : [i=to_i(a)] { return i; };
+    auto bi = b->fn ? b->fn : [i=to_i(b)] { return i; };
 
     auto * nn = clone<custom_node>(n);
-    nn->fn = sfn_t{new fn_t{[ai, bi] mutable {
-      return (*ai)() + (*bi)();
-    } }};
+    nn->fn = [ai, bi] mutable {
+      return ai() + bi();
+    };
     return nn;
   };
   ctx.fns["pr"] = [](auto n, auto aa, auto as) -> const node * {
     if (as != 1) lispy::erred(n, "pr expects a single argument");
 
     auto a = eval<custom_node>(aa[0]);
-    auto ai = a->fn ? a->fn : sfn_t{new fn_t{[i=to_i(a)] { return i; }}};
+    auto ai = a->fn ? a->fn : [i=to_i(a)] { return i; };
 
     auto * nn = clone<custom_node>(n);
-    nn->fn = sfn_t{new fn_t{[ai] mutable {
-      auto i = (*ai)();
+    nn->fn = [ai] mutable {
+      auto i = ai();
       putln(i);
       return i;
-    }}};
+    };
     return nn;
   };
 
