@@ -37,6 +37,10 @@ namespace lispy {
 
   export constexpr bool is_atom(const node * n) { return n->atom.size(); }
 
+  export jute::view to_atom(const node * n) {
+    if (!is_atom(n)) erred(n, "expecting atom");
+    return n->atom;
+  }
   export float to_f(const node * n) {
     if (!is_atom(n)) erred(n, "expecting number");
     auto [v, ok] = jute::to_f(n->atom);
