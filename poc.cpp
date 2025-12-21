@@ -22,6 +22,11 @@ static constexpr jute::view src = R"(
   (pr (sub 69 34))
 )";
 
+// TODO: more examples without a custom node
+// Avoiding side-effects with custom nodes is cool, but there is a performance
+// cost to create arenas. So, unless all contexts are using the same node type,
+// then each custom type introduces a time penalty to allocate/deallocate an
+// arena for its type.
 struct custom_node : node {
   int val;
   bool is_val;
