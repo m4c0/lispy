@@ -209,6 +209,7 @@ void lispy::each(jute::view filename, jute::view src, hai::fn<void, const lispy:
   }
 }
 
+// TODO: make a name->source cache then make node trivially destructble
 template<> const lispy::node * lispy::run<lispy::node>(jute::view filename, jute::view source) {
   const node * n = nullptr;
   each(filename, source, [&](auto nn) {
