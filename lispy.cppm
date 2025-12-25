@@ -19,7 +19,7 @@ namespace lispy {
   };
 
   export struct node : no::move {
-    jute::view atom {};
+    jute::heap atom {};
     const node * list {};
     const node * next {};
     jute::heap src {};

@@ -127,7 +127,7 @@ static lispy::node * next_list(lispy::reader & r) {
     auto nn = (token == "(") ?
       next_list(r) :
       new (lispy::alloc()) lispy::node {
-        .atom = token,
+        .atom { jute::no_copy {}, token }, // Managed by "node::src"
         .src = r.data(),
         .file = r.file(),
         .loc = static_cast<unsigned>(r.loc() - token.size()),
@@ -149,7 +149,7 @@ static lispy::node * next_node(lispy::reader & r) {
     r.erred("unbalanced close parenthesis");
   } else {
     return new (lispy::alloc()) lispy::node { 
-      .atom = token,
+      .atom { jute::no_copy {}, token },
       .src = r.data(),
       .file = r.file(),
       .loc = static_cast<unsigned>(r.loc() - token.size()),
