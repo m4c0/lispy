@@ -163,6 +163,18 @@ static auto ls(const lispy::node * n) {
   return sz;
 }
 
+static auto binop(const lispy::node * n, const lispy::node ** aa, const lispy::node ** ap, int (*fn)(int, int)) {
+  using namespace lispy;
+
+  if (ap == aa) erred(n, "math operation expects at least a parameter");
+
+  int res = to_i(eval<node>(aa[0]));
+  for (auto a = aa + 1; a != ap; a++) res = fn(res, to_i(eval<node>(*a)));
+  auto nn = clone<node>(n);
+  nn->atom = jute::to_s(res);
+  return nn;
+}
+
 template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(const lispy::node * n) {
   if (!n->list) return n;
   if (!is_atom(n->list)) erred(n->list, "expecting an atom as a function name");
@@ -194,6 +206,14 @@ template<> [[nodiscard]] const lispy::node * lispy::eval<lispy::node>(const lisp
   } else if (fn == "random") {
     if (ap == aa) erred(n, "random requires at least a parameter");
     return eval<node>(aa[rng::rand(ap - aa)]);
+  } else if (fn == "+") {
+    return binop(n, aa, ap, [](int a, int b) { return a + b; });
+  } else if (fn == "-") {
+    return binop(n, aa, ap, [](int a, int b) { return a - b; });
+  } else if (fn == "*") {
+    return binop(n, aa, ap, [](int a, int b) { return a * b; });
+  } else if (fn == "/") {
+    return binop(n, aa, ap, [](int a, int b) { return a / b; });
   } else if (auto d = context()->def(fn)) {
     return eval<node>(d);
   } else {
