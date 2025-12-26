@@ -10,19 +10,20 @@ using namespace lispy;
 
 static constexpr auto src = R"(
   (repl
-    (do)
+    (dummy)
     (+ (* 60 2) 200)
     (- 200 80)
     900
   )
 )"_sv;
-// static constexpr auto exp = R"(
-//   (repl
-//     310
-//     120
-//     900
-//   )
-// )"_sv;
+static constexpr auto exp = R"(
+  (repl
+    test
+    320
+    120
+    900
+  )
+)"_sv;
 
 int find_start(const node * n) {
   if (is_atom(n)) return n->loc;
@@ -53,25 +54,38 @@ int main() try {
   temp_arena<node> a {};
   temp_frame ctx {};
   ctx.ptrs["repls"] = &repls;
+  ctx.fns["dummy"] = [](auto * n, auto aa, auto as) -> const node * {
+    auto nn = clone<node>(n);
+    nn->atom = "test";
+    return nn;
+  };
   ctx.fns["repl"] = [](auto * n, auto aa, auto as) -> const node * {
     auto repls = static_cast<hai::chain<repl> *>(context()->ptr("repls"));
     for (auto i = 0; i < as; i++) {
+      auto nn = eval<node>(aa[i]);
+      if (!is_atom(nn)) erred(aa[i], "expecting atom as result");
+
       auto start = find_start(aa[i]);
       auto end = find_end(aa[i]);
-      repls->push_back({ start, end, "uga" });
+      repls->push_back({ start, end, nn->atom });
     }
     return n;
   };
   run<node>("no-file", src);
 
+  jute::heap res {};
+
   auto prev = 0;
   for (auto [s, e, txt] : repls) {
     auto prefix = src.subview(prev, s - prev).middle;
-    put(prefix, txt);
-
+    res = (res + prefix + txt).heap();
     prev = e;
   }
-  put(src.subview(prev).after);
+  res = (res + src.subview(prev).after).heap();
+
+  if (res == exp) return 0;
+
+  die("result did not match expectations: [", res, "] [", exp, "]");
 } catch (const parser_error & e) {
   errln("error on line ", e.line, " - ", e.msg);
   return 1;
