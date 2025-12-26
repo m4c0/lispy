@@ -26,40 +26,35 @@ static constexpr auto exp = R"(
 )"_sv;
 
 int main() try {
-  struct repl {
-    const node * n;
-    jute::heap txt;
-  };
-  hai::chain<repl> repls { 16 };
+  jute::heap res {};
+  unsigned prev = 0;
 
   temp_arena<node> a {};
   temp_frame ctx {};
-  ctx.ptrs["repls"] = &repls;
+  ctx.ptrs["res"] = &res;
+  ctx.ptrs["prev"] = &prev;
   ctx.fns["dummy"] = [](auto * n, auto aa, auto as) -> const node * {
     auto nn = clone<node>(n);
     nn->atom = "test";
     return nn;
   };
   ctx.fns["repl"] = [](auto * n, auto aa, auto as) -> const node * {
-    auto repls = static_cast<hai::chain<repl> *>(context()->ptr("repls"));
+    auto & res = *static_cast<jute::heap *>(context()->ptr("res"));
+    auto & prev = *static_cast<unsigned *>(context()->ptr("prev"));
+
     for (auto i = 0; i < as; i++) {
       auto nn = eval<node>(aa[i]);
       if (!is_atom(nn)) erred(aa[i], "expecting atom as result");
-      repls->push_back({ aa[i], nn->atom });
+
+      auto [s, e] = range_of(aa[i]);
+      auto prefix = (*n->src).subview(prev, s - prev).middle;
+      res = (res + prefix + nn->atom).heap();
+      prev = e;
     }
     return n;
   };
   run<node>("no-file", src);
 
-  jute::heap res {};
-
-  auto prev = 0;
-  for (auto [n, txt] : repls) {
-    auto [s, e] = range_of(n);
-    auto prefix = src.subview(prev, s - prev).middle;
-    res = (res + prefix + txt).heap();
-    prev = e;
-  }
   res = (res + src.subview(prev).after).heap();
 
   if (res == exp) return 0;
