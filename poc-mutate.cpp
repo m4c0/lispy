@@ -25,28 +25,9 @@ static constexpr auto exp = R"(
   )
 )"_sv;
 
-int find_start(const node * n) {
-  if (is_atom(n)) return n->loc;
-
-  auto l = n->loc;
-  while (l && (*n->src)[l] != '(') l--;
-  return l;
-}
-int find_end(const node * n) {
-  if (is_atom(n)) return n->loc + to_atom(n).size();
-
-  auto last = n->list;
-  while (last->next) last = last->next;
-
-  auto l = last->loc;
-  while (l < n->src.size() && (*n->src)[l] != ')') l++;
-  return l + 1;
-}
-
 int main() try {
   struct repl {
-    int start;
-    int end;
+    const node * n;
     jute::heap txt;
   };
   hai::chain<repl> repls { 16 };
@@ -64,10 +45,7 @@ int main() try {
     for (auto i = 0; i < as; i++) {
       auto nn = eval<node>(aa[i]);
       if (!is_atom(nn)) erred(aa[i], "expecting atom as result");
-
-      auto start = find_start(aa[i]);
-      auto end = find_end(aa[i]);
-      repls->push_back({ start, end, nn->atom });
+      repls->push_back({ aa[i], nn->atom });
     }
     return n;
   };
@@ -76,7 +54,8 @@ int main() try {
   jute::heap res {};
 
   auto prev = 0;
-  for (auto [s, e, txt] : repls) {
+  for (auto [n, txt] : repls) {
+    auto [s, e] = range_of(n);
     auto prefix = src.subview(prev, s - prev).middle;
     res = (res + prefix + txt).heap();
     prev = e;

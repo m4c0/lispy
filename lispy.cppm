@@ -71,6 +71,34 @@ namespace lispy {
   }
 #endif
 
+  constexpr inline unsigned find_start(const node * n) {
+    if (is_atom(n)) return n->loc;
+
+    auto l = n->loc;
+    while (l && (*n->src)[l] != '(') l--;
+    return l;
+  }
+  constexpr inline unsigned find_end(const node * n) {
+    if (is_atom(n)) return n->loc + to_atom(n).size();
+
+    auto last = n->list;
+    while (last->next) last = last->next;
+
+    auto l = last->loc;
+    while (l < n->src.size() && (*n->src)[l] != ')') l++;
+    return l + 1;
+  }
+  export constexpr auto range_of(const node * n) {
+    struct pair {
+      unsigned sloc;
+      unsigned eloc;
+    } res {
+      .sloc = find_start(n),
+      .eloc = find_end(n),
+    };
+    return res;
+  }
+
   using fn_t = const node * (*)(const node * n, const node * const * aa, unsigned as);
   export class frame {
   protected:
